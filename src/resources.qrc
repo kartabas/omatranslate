@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Main.qml">Main.qml</file>
+        <file alias="BarButton.qml">BarButton.qml</file>
+        <file alias="HistoryRow.qml">HistoryRow.qml</file>
+        <file alias="SettingsPopup.qml">SettingsPopup.qml</file>
+        <file alias="Confirm.qml">Confirm.qml</file>
+        <file alias="skill.md">skill.md</file>
+        <file alias="i18n/en.json">i18n/en.json</file>
+        <file alias="i18n/de.json">i18n/de.json</file>
+        <file alias="i18n/da.json">i18n/da.json</file>
+    </qresource>
+</RCC>

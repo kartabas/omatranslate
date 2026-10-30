@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Omatranslate
+Comment=Translate what you highlight in a PDF
+Comment[de]=Übersetze, was du in einer PDF markierst
+Comment[da]=Oversæt det, du markerer i en PDF
+Exec=omatranslate open %f
+Icon=omatranslate
+Terminal=false
+Categories=Utility;
+MimeType=application/pdf
+StartupWMClass=omatranslate
+Keywords=translate;translation;PDF;dictionary;

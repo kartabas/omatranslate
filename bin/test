@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+mkdir -p "$ROOT/build/tests"
+cd "$ROOT/build/tests"
+
+qmake6 "$ROOT/tests/omatranslate_tests.pro"
+make -j"$(nproc)"
+
+QT_QPA_PLATFORM=offscreen ./omatranslate_tests
+
+# The command line is the app without a window. It is only there once
+# bin/build has run, and these checks need no network.
+BIN="$ROOT/build/omatranslate"
+if [ -x "$BIN" ]; then
+    python3 "$ROOT/tests/cli_test.py" "$BIN"
+fi
