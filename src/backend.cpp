@@ -43,7 +43,7 @@ Backend::Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatche
     if (m_settings) {
         m_source = m_settings->value("sourceLanguage", "auto").toString();
         m_target = m_settings->value("targetLanguage", fallbackTarget).toString();
-        m_autoTranslate = m_settings->value("autoTranslate", true).toBool();
+        m_autoTranslate = m_settings->value("autoTranslate", false).toBool();
     } else {
         m_target = fallbackTarget;
     }
@@ -185,6 +185,8 @@ void Backend::handleSelection(const QString &text) {
     emit changed();
     if (!cleaned.isEmpty() && m_autoTranslate)
         m_debounce.start();
+    if (!cleaned.isEmpty())
+        emit highlighted(cleaned);
 }
 
 void Backend::translateNow() {

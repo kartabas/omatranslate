@@ -84,6 +84,9 @@ public slots:
 
 signals:
     void changed();
+    // A new highlight, as opposed to a passage picked from the session's
+    // history or the current one being shown again.
+    void highlighted(const QString &text);
     void historyChanged();
     void documentChanged();
     void noticeChanged();
@@ -106,7 +109,7 @@ private:
     QSettings *m_settings = nullptr;
     QString m_source = QStringLiteral("auto");
     QString m_target = QStringLiteral("en");
-    bool m_autoTranslate = true;
+    bool m_autoTranslate = false;
 
     QString m_documentPath;
     QString m_documentName;

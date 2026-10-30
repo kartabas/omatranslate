@@ -6,6 +6,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QQuickWindow>
 #include <QSettings>
 #include <QUrl>
 #include <cstdio>
@@ -14,6 +15,7 @@
 #include "cli.h"
 #include "googletranslate.h"
 #include "languages.h"
+#include "overlay.h"
 #include "portalfilepicker.h"
 #include "selectionwatcher.h"
 #include "theme.h"
@@ -66,13 +68,27 @@ int main(int argc, char *argv[]) {
     Backend backend(&picker, &translate, &watcher, &settings, targetForOmarchyLanguage(translator.language()));
 
     QQmlApplicationEngine engine;
+    // Declared after the engine, so the card's window is destroyed before the
+    // engine that created it.
+    Overlay overlay(&backend);
     QObject::connect(&translator, &Translator::changed, &engine, &QQmlEngine::retranslate);
     engine.rootContext()->setContextProperty("translator", &translator);
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("backend", &backend);
+    engine.rootContext()->setContextProperty("overlay", &overlay);
     engine.load(QUrl("qrc:/Main.qml"));
     if (engine.rootObjects().isEmpty())
         return 1;
+    overlay.attach(&engine);
+
+    // The card belongs to the reading session; closing the app's window ends
+    // it too, so it can never keep the application alive on its own.
+    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst())) {
+        QObject::connect(window, &QWindow::visibleChanged, &overlay, [&overlay](bool visible) {
+            if (!visible)
+                overlay.dismiss();
+        });
+    }
 
     watcher.start();
     if (args.size() > 1)

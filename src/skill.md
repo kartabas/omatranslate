@@ -32,10 +32,12 @@ document.
 
 ## The app
 
-`omatranslate open <pdf>` opens the PDF in the person's reader and translates
-whatever they highlight there. That needs their desktop, so do not wait on it.
-Their translations live only in that window for the session; the app exports
-them with Ctrl+E or the Export button as `<pdf-name>.omatranslate.md`.
+`omatranslate open <pdf>` opens the PDF in the person's reader. When they
+highlight a passage there, a Translate chip appears beside it; clicking it
+opens the translation in a card over the page, and the passage joins the
+session in Omatranslate's window. That needs their desktop, so do not wait on
+it. Their translations live only in that window for the session; the app
+exports them with Ctrl+E or the Export button as `<pdf-name>.omatranslate.md`.
 
 ## Installing this skill
 

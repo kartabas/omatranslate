@@ -4,6 +4,8 @@
         <file alias="BarButton.qml">BarButton.qml</file>
         <file alias="HistoryRow.qml">HistoryRow.qml</file>
         <file alias="SettingsPopup.qml">SettingsPopup.qml</file>
+        <file alias="LanguageMenu.qml">LanguageMenu.qml</file>
+        <file alias="TranslationOverlay.qml">TranslationOverlay.qml</file>
         <file alias="Confirm.qml">Confirm.qml</file>
         <file alias="skill.md">skill.md</file>
         <file alias="i18n/en.json">i18n/en.json</file>

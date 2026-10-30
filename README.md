@@ -1,9 +1,10 @@
 # Omatranslate
 
 A reading companion for PDFs on Omarchy. Read in your PDF reader as you
-always do; highlight a passage and its translation appears in this small
-window, ready to copy. Everything you translate during a session gathers
-there, to export as Markdown when you're done.
+always do; highlight a passage, click the small Translate chip that appears
+beside it, and the translation opens right there, over the page. Everything
+you translate during a session also gathers in the app's window, to export as
+Markdown when you're done.
 
 ![Omatranslate translating a passage](docs/screenshot.png)
 
@@ -23,32 +24,45 @@ in the app launcher (`Super + Space`) and in the "Open with" menu for PDFs.
 It does not take over as your default PDF reader.
 
 Requirements, all part of Omarchy: `qt6-base`, `qt6-declarative`,
-`qt6-wayland`, `qt6-svg`, `xdg-desktop-portal`, `wl-clipboard`, `xdg-utils`,
-plus `gcc` and `make` to build.
+`qt6-wayland`, `qt6-svg`, `layer-shell-qt`, `xdg-desktop-portal`,
+`wl-clipboard`, `xdg-utils`, plus `gcc` and `make` to build.
 
 ## Reading
 
 1. Open a PDF with `Ctrl+O`, or start the app with a file:
    `omatranslate open paper.pdf`.
 2. Select a passage in your PDF reader. Omatranslate watches the Wayland
-   primary selection, so the translation appears as soon as you let go.
-3. Press `Space` to copy the translation, or drag it out of the window.
+   primary selection, so a small **Translate** chip appears where the
+   selection ended.
+3. Click the chip. The translation opens in a card beside the passage, with
+   **Copy** and **Close**; the reader keeps the keyboard, so its own shortcuts
+   keep working. Pressing `Enter` in Omatranslate does the same thing.
+4. The card closes on **Close**, on the next highlight, or when you quit.
+   Every translation is also added to the session in the app window.
 
-Every translation is added to the session below, newest first. Press `Ctrl+E`
-to export the session to a sidecar Markdown file, `paper.omatranslate.md`,
-beside the PDF. If your reader shows a "Save as" dialog, that file is what
-you chose.
+The card floats above the page rather than scrolling with it, and works while
+Omatranslate is running. It needs Hyprland to know where the highlight is; if
+that isn't available, the translation still appears in the app window.
+
+Press `Space` to copy the translation, or drag it out of the window. Press
+`Ctrl+E` to export the session to a sidecar Markdown file,
+`paper.omatranslate.md`, beside the PDF. If your reader shows a "Save as"
+dialog, that file is what you chose.
 
 Nothing is written until you export, and quitting with unexported
 translations asks first.
 
 ## Settings
 
-The gear in the top bar (or `Ctrl+,`) chooses the languages. The source can
-be auto-detected; the target starts as your Omarchy language and can be any
-of the languages Google Translate accepts. There is also a switch to turn off
-translating on every new highlight, so you translate only when you press
-`Enter`.
+The language pair sits in the top bar: click it to choose the source and
+target without leaving the page. The gear (or `Ctrl+,`) opens the same
+choices with the rest of the settings. The source can be auto-detected; the
+target starts as your Omarchy language and can be any of the languages Google
+Translate accepts.
+
+By default a highlight waits for you to click **Translate**. Turn on
+"Translate new highlights" in the gear if you would rather have the card open
+as soon as you let go.
 
 ## Keyboard
 

@@ -11,6 +11,7 @@ HEADERS += \
     ../src/filepicker.h \
     ../src/googletranslate.h \
     ../src/languages.h \
+    ../src/placement.h \
     ../src/selectionwatcher.h \
     ../src/theme.h \
     ../src/translator.h
@@ -20,6 +21,7 @@ SOURCES += \
     ../src/backend.cpp \
     ../src/googletranslate.cpp \
     ../src/languages.cpp \
+    ../src/placement.cpp \
     ../src/selectionwatcher.cpp \
     ../src/theme.cpp \
     ../src/translator.cpp

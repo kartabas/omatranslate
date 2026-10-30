@@ -10,6 +10,8 @@ HEADERS += \
     src/filepicker.h \
     src/googletranslate.h \
     src/languages.h \
+    src/overlay.h \
+    src/placement.h \
     src/portalfilepicker.h \
     src/selectionwatcher.h \
     src/theme.h \
@@ -21,9 +23,14 @@ SOURCES += \
     src/googletranslate.cpp \
     src/languages.cpp \
     src/main.cpp \
+    src/overlay.cpp \
+    src/placement.cpp \
     src/portalfilepicker.cpp \
     src/selectionwatcher.cpp \
     src/theme.cpp \
     src/translator.cpp
+
+INCLUDEPATH += /usr/include/LayerShellQt
+LIBS += -lLayerShellQtInterface
 
 RESOURCES += src/resources.qrc

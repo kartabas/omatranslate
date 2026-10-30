@@ -81,5 +81,10 @@
   "The portal file picker failed: %1": "The portal file picker failed: %1",
   "Could not listen for the portal file picker response.": "Could not listen for the portal file picker response.",
   "Open": "Open",
-  "Save": "Save"
+  "Save": "Save",
+  "Highlight a passage in your PDF reader. A Translate chip appears beside it; the translation opens right there.": "Highlight a passage in your PDF reader. A Translate chip appears beside it; the translation opens right there.",
+  "Click Translate beside the highlight, or press Enter.": "Click Translate beside the highlight, or press Enter.",
+  "Off by default: highlight, then click Translate beside the passage.": "Off by default: highlight, then click Translate beside the passage.",
+  "Copied": "Copied",
+  "Auto": "Auto"
 }

@@ -127,7 +127,7 @@ Popup {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("Without this, press Enter to translate what you selected.")
+                    text: qsTr("Off by default: highlight, then click Translate beside the passage.")
                     color: theme.muted
                     font.pixelSize: 12
                     wrapMode: Text.Wrap

@@ -10,6 +10,7 @@
 #include "filepicker.h"
 #include "googletranslate.h"
 #include "languages.h"
+#include "placement.h"
 #include "selectionwatcher.h"
 #include "theme.h"
 #include "translator.h"
@@ -159,6 +160,7 @@ private slots:
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.status(), QStringLiteral("done"));
@@ -199,6 +201,7 @@ private slots:
         translate.failNext = true;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.status(), QStringLiteral("error"));
@@ -216,6 +219,7 @@ private slots:
         translate.failNext = true;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.status(), QStringLiteral("error"));
@@ -233,6 +237,7 @@ private slots:
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.historyCount(), 1);
@@ -253,6 +258,7 @@ private slots:
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.historyCount(), 1);
@@ -269,6 +275,7 @@ private slots:
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.historyCount(), 1);
@@ -318,6 +325,7 @@ private slots:
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
         backend.setDebounceInterval(0);
+        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTRY_COMPARE(backend.historyCount(), 1);
@@ -530,6 +538,91 @@ private slots:
         QTRY_COMPARE(watcher.text(), QStringLiteral("Guten Tag"));
         QVERIFY(spy.count() >= 2);
         watcher.stop();
+    }
+
+    void newHighlightsWaitForATranslate()
+    {
+        QTemporaryDir dir;
+        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+        FakePicker picker;
+        FakeTranslate translate;
+        Backend backend(&picker, &translate, nullptr, &settings, "de");
+        backend.setDebounceInterval(0);
+
+        QCOMPARE(backend.autoTranslate(), false);
+        QSignalSpy highlighted(&backend, &Backend::highlighted);
+        backend.handleSelection(QStringLiteral("Erster Satz."));
+        QCOMPARE(highlighted.count(), 1);
+        QCOMPARE(highlighted.first().first().toString(), QStringLiteral("Erster Satz."));
+        QTest::qWait(50);
+        QCOMPARE(translate.calls.size(), 0);
+        QVERIFY(backend.translation().isEmpty());
+    }
+
+    void placementReadsHyprlandOutput()
+    {
+        bool ok = false;
+        QCOMPARE(parseCursorPosition("  1305, 546\n", &ok), QPoint(1305, 546));
+        QVERIFY(ok);
+        parseCursorPosition("", &ok);
+        QVERIFY(!ok);
+        parseCursorPosition("1305 546", &ok);
+        QVERIFY(!ok);
+
+        const QList<ScreenInfo> screens = parseMonitors(R"([
+            {"name":"eDP-1","width":1920,"height":1080,"scale":1.2,"x":0,"y":0,"focused":true},
+            {"name":"HDMI-A-1","width":1920,"height":1080,"scale":1.0,"x":-1920,"y":0,"focused":false}
+        ])");
+        QCOMPARE(screens.size(), 2);
+        QCOMPARE(screens.at(0).rect, QRect(0, 0, 1600, 900));
+        QCOMPARE(screens.at(1).rect, QRect(-1920, 0, 1920, 1080));
+        QCOMPARE(screenIndexAt(QPoint(-100, 50), screens), 1);
+        QCOMPARE(screenIndexAt(QPoint(500, 500), screens), 0);
+        QCOMPARE(screenIndexAt(QPoint(-5000, 0), screens), -1);
+
+        QCOMPARE(parseActiveWindow(R"({"at":[10,20],"size":[800,600]})"), QRect(10, 20, 800, 600));
+        QCOMPARE(parseActiveWindowClass(R"({"class":"org.gnome.Evince"})"),
+                 QStringLiteral("org.gnome.Evince"));
+    }
+
+    void placementChoosesTheHighlight()
+    {
+        const QList<ScreenInfo> screens{
+            {QStringLiteral("eDP-1"), QRect(0, 0, 1600, 900), true},
+            {QStringLiteral("HDMI-A-1"), QRect(-1920, 0, 1920, 1080), false},
+        };
+        bool ok = false;
+        QCOMPARE(chooseAnchor(QPoint(600, 400), screens, QRect(0, 0, 1600, 900), &ok),
+                 QPoint(600, 400));
+        QVERIFY(ok);
+
+        // A keyboard selection leaves the pointer elsewhere, so the active
+        // window is the better place for the card.
+        QCOMPARE(chooseAnchor(QPoint(-5000, 0), screens, QRect(0, 0, 1600, 900), &ok),
+                 QPoint(799, 449));
+        QVERIFY(ok);
+
+        // Without an active window, the focused screen's middle.
+        QCOMPARE(chooseAnchor(QPoint(-5000, 0), screens, QRect(), &ok), QPoint(799, 449));
+        QVERIFY(ok);
+
+        chooseAnchor(QPoint(0, 0), {}, QRect(), &ok);
+        QVERIFY(!ok);
+    }
+
+    void placementKeepsTheCardOnScreen()
+    {
+        const QSize card(360, 200);
+        const QSize screen(1600, 900);
+        QCOMPARE(popoverPosition(QPoint(100, 100), card, screen), QPoint(116, 120));
+        // Near the right edge it opens to the left of the pointer.
+        QCOMPARE(popoverPosition(QPoint(1500, 100), card, screen), QPoint(1124, 120));
+        // Near the bottom it opens above it.
+        QCOMPARE(popoverPosition(QPoint(100, 800), card, screen), QPoint(116, 588));
+        // Never under the bar at the top.
+        QCOMPARE(popoverPosition(QPoint(100, 2), card, screen), QPoint(116, 40));
+        // A card wider than the screen is pinned to the margin.
+        QCOMPARE(popoverPosition(QPoint(0, 0), QSize(2000, 200), screen), QPoint(12, 40));
     }
 
 private:

@@ -81,5 +81,10 @@
   "The portal file picker failed: %1": "Portalens filvælger mislykkedes: %1",
   "Could not listen for the portal file picker response.": "Kunne ikke lytte efter portalens filvælger-svar.",
   "Open": "Åbn",
-  "Save": "Gem"
+  "Save": "Gem",
+  "Highlight a passage in your PDF reader. A Translate chip appears beside it; the translation opens right there.": "Markér et afsnit i din PDF-læser. Ved siden af det vises en Oversæt-knap; oversættelsen åbner lige der.",
+  "Click Translate beside the highlight, or press Enter.": "Klik på Oversæt ved markeringen, eller tryk Enter.",
+  "Off by default: highlight, then click Translate beside the passage.": "Slået fra som standard: markér, og klik derefter på Oversæt ved afsnittet.",
+  "Copied": "Kopieret",
+  "Auto": "Auto"
 }

@@ -81,5 +81,10 @@
   "The portal file picker failed: %1": "Die Dateiauswahl des Portals ist fehlgeschlagen: %1",
   "Could not listen for the portal file picker response.": "Die Antwort der Portal-Dateiauswahl konnte nicht abgewartet werden.",
   "Open": "Öffnen",
-  "Save": "Speichern"
+  "Save": "Speichern",
+  "Highlight a passage in your PDF reader. A Translate chip appears beside it; the translation opens right there.": "Markiere einen Absatz in deinem PDF-Reader. Daneben erscheint ein Übersetzen-Knopf; die Übersetzung öffnet sich direkt dort.",
+  "Click Translate beside the highlight, or press Enter.": "Klicke neben der Markierung auf Übersetzen oder drücke Enter.",
+  "Off by default: highlight, then click Translate beside the passage.": "Standardmäßig aus: Markiere, dann klicke neben dem Absatz auf Übersetzen.",
+  "Copied": "Kopiert",
+  "Auto": "Auto"
 }

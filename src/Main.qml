@@ -19,6 +19,8 @@ ApplicationWindow {
 
     readonly property color accent: theme.accent
     readonly property bool compact: width < 560
+    // Enough room for the shortcut hints and full language names.
+    readonly property bool roomy: width >= 720
 
     // Single-key shortcuts must never fire while typing into a field, or while
     // an overlay owns the keyboard. These flags are set by the overlays
@@ -28,6 +30,7 @@ ApplicationWindow {
     property bool confirmVisible: false
     readonly property bool typing: activeFocusItem !== null && activeFocusItem.cursorPosition !== undefined
     readonly property bool overlayOpen: helpVisible || settingsVisible || confirmVisible
+                                        || languageMenu.menuOpen
     readonly property bool keysWork: !typing && !overlayOpen
 
     readonly property var icons: ({
@@ -154,28 +157,38 @@ ApplicationWindow {
                 anchors.fill: parent
                 anchors.leftMargin: win.compact ? 14 : 22
                 anchors.rightMargin: win.compact ? 10 : 18
-                spacing: 10
+                spacing: 8
 
                 BarButton {
-                    Layout.maximumWidth: win.width * 0.62
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 70
+                    Layout.maximumWidth: win.width * 0.5
                     text: backend.hasDocument ? backend.documentName : qsTr("Open PDF…")
                     icon: win.icons.document
-                    key: win.compact ? "" : "Ctrl+O"
+                    key: win.roomy ? "Ctrl+O" : ""
                     onClicked: backend.openDocument()
                 }
 
+                LanguageMenu {
+                    id: languageMenu
+                    compact: win.width < 900
+                }
+
                 BarButton {
-                    visible: !win.compact
-                    text: backend.languageName(backend.sourceLanguage) + " → "
-                          + backend.languageName(backend.targetLanguage)
-                    onClicked: settings.open()
+                    visible: !win.compact && backend.selection !== "" && backend.translation === ""
+                             && backend.status !== "translating" && backend.status !== "waiting"
+                             && !backend.autoTranslate
+                    text: qsTr("Translate")
+                    key: win.roomy ? "Enter" : ""
+                    primary: true
+                    onClicked: backend.translateNow()
                 }
 
                 Item { Layout.fillWidth: true }
 
                 BarButton {
                     visible: backend.hasDocument
-                    text: win.compact ? "" : qsTr("Reader")
+                    text: win.roomy ? qsTr("Reader") : ""
                     icon: win.icons.reader
                     onClicked: backend.openInReader()
                 }
@@ -243,7 +256,7 @@ ApplicationWindow {
 
                     Text {
                         width: parent.width
-                        text: qsTr("Highlight a passage in your PDF reader. Its translation appears here, ready to copy.")
+                        text: qsTr("Highlight a passage in your PDF reader. A Translate chip appears beside it; the translation opens right there.")
                         color: theme.muted
                         font.pixelSize: 15
                         lineHeight: 1.3
@@ -362,7 +375,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             visible: backend.translation === "" && backend.status !== "error"
                             text: backend.autoTranslate ? qsTr("Translating…")
-                                                        : qsTr("Press Enter to translate this passage.")
+                                                        : qsTr("Click Translate beside the highlight, or press Enter.")
                             color: theme.muted
                             font.pixelSize: 15
                             wrapMode: Text.Wrap
