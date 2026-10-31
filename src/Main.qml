@@ -9,7 +9,7 @@ ApplicationWindow {
     height: 800
     minimumWidth: 420
     minimumHeight: 560
-    visible: true
+    visible: app.mainVisible
     title: "Omatranslate"
     color: theme.background
 
@@ -46,8 +46,6 @@ ApplicationWindow {
     function statusText() {
         if (backend.status === "translating")
             return qsTr("Translating…");
-        if (backend.status === "waiting")
-            return qsTr("Highlight detected");
         if (backend.status === "error")
             return qsTr("Translation failed");
         const from = backend.detected !== "" ? backend.languageName(backend.detected)
@@ -118,10 +116,22 @@ ApplicationWindow {
     }
 
     onClosing: (close) => {
+        // In the background the window is only a view onto the service:
+        // closing it hides the view and keeps watching and the session alive.
+        if (app.serviceMode && !win.quitting) {
+            close.accepted = false;
+            app.hideMain();
+            return;
+        }
         if (win.quitting || !backend.unsaved)
             return;
         close.accepted = false;
         win.askToQuit();
+    }
+
+    Connections {
+        target: app
+        function onSettingsRequested() { settings.open() }
     }
 
     // The accent-tinted wash that gives the window its color, from the theme's
@@ -176,8 +186,7 @@ ApplicationWindow {
 
                 BarButton {
                     visible: !win.compact && backend.selection !== "" && backend.translation === ""
-                             && backend.status !== "translating" && backend.status !== "waiting"
-                             && !backend.autoTranslate
+                             && backend.status !== "translating"
                     text: qsTr("Translate")
                     key: win.roomy ? "Enter" : ""
                     primary: true
@@ -221,6 +230,38 @@ ApplicationWindow {
                 y: 10
                 height: implicitHeight
                 spacing: 18
+
+                // The background switch lives in the Omarchy bar. When it is
+                // off, say so here and offer to turn it back on.
+                Rectangle {
+                    width: page.width
+                    height: offRow.implicitHeight + 24
+                    visible: !backend.enabled
+                    radius: theme.radius
+                    color: Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.10)
+                    border.width: 1
+                    border.color: Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.35)
+
+                    RowLayout {
+                        id: offRow
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 10
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Omatranslate is off. Highlights won't show a Translate chip.")
+                            color: theme.foreground
+                            font.pixelSize: 13
+                            wrapMode: Text.Wrap
+                        }
+                        BarButton {
+                            text: qsTr("Turn on")
+                            primary: true
+                            onClicked: backend.setEnabled(true)
+                        }
+                    }
+                }
 
                 // Empty state: nothing highlighted yet.
                 Column {
@@ -299,6 +340,7 @@ ApplicationWindow {
                         width: parent.width
                         visible: backend.watchError !== ""
                         text: backend.watchError
+                        textFormat: Text.PlainText
                         color: theme.danger
                         font.pixelSize: 12
                         wrapMode: Text.Wrap
@@ -328,6 +370,7 @@ ApplicationWindow {
                             Text {
                                 Layout.fillWidth: true
                                 text: win.statusText()
+                                textFormat: Text.PlainText
                                 color: backend.status === "error" ? theme.danger : theme.accent
                                 font.pixelSize: 12
                                 font.letterSpacing: 0.8
@@ -346,6 +389,7 @@ ApplicationWindow {
                         Text {
                             Layout.fillWidth: true
                             text: backend.selection
+                            textFormat: Text.PlainText
                             color: theme.muted
                             font.pixelSize: win.compact ? 13 : 14
                             lineHeight: 1.35
@@ -365,6 +409,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             visible: backend.translation !== ""
                             text: backend.translation
+                            textFormat: Text.PlainText
                             color: theme.foreground
                             font.pixelSize: win.compact ? 19 : 23
                             lineHeight: 1.35
@@ -374,17 +419,37 @@ ApplicationWindow {
                         Text {
                             Layout.fillWidth: true
                             visible: backend.translation === "" && backend.status !== "error"
-                            text: backend.autoTranslate ? qsTr("Translating…")
-                                                        : qsTr("Click Translate beside the highlight, or press Enter.")
+                                     && backend.status !== "translating"
+                            text: qsTr("Click Translate beside the highlight, or press Enter.")
                             color: theme.muted
                             font.pixelSize: 15
                             wrapMode: Text.Wrap
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 9
+                            visible: backend.status === "translating"
+
+                            BusyIndicator {
+                                running: parent.visible
+                                implicitWidth: 20
+                                implicitHeight: 20
+                                padding: 0
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Translating…")
+                                color: theme.muted
+                                font.pixelSize: 13
+                            }
                         }
 
                         Text {
                             Layout.fillWidth: true
                             visible: backend.status === "error"
                             text: backend.error
+                            textFormat: Text.PlainText
                             color: theme.danger
                             font.pixelSize: 14
                             wrapMode: Text.Wrap
@@ -394,7 +459,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             spacing: 10
                             visible: backend.status === "error"
-                                     || (backend.translation === "" && !backend.autoTranslate)
+                                     || (backend.translation === "" && backend.status !== "translating")
 
                             BarButton {
                                 visible: backend.status === "error"
@@ -403,8 +468,8 @@ ApplicationWindow {
                                 onClicked: backend.retry()
                             }
                             BarButton {
-                                visible: backend.translation === "" && !backend.autoTranslate
-                                         && backend.status !== "error"
+                                visible: backend.translation === "" && backend.status !== "error"
+                                         && backend.status !== "translating"
                                 text: qsTr("Translate")
                                 key: "Enter"
                                 primary: true
@@ -501,6 +566,7 @@ ApplicationWindow {
                       ? backend.notice
                       : win.compact ? qsTr("Space copies · ? shortcuts")
                                     : qsTr("Space copies the translation · Ctrl+E exports · ? shows every shortcut")
+                textFormat: Text.PlainText
                 color: backend.notice !== "" ? theme.accent : theme.muted
                 font.pixelSize: 12
                 elide: Text.ElideRight

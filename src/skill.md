@@ -9,7 +9,8 @@ description: |
 
 # Omatranslate
 
-Omatranslate translates text through Google Translate and keeps the
+Omatranslate translates text through the service chosen in its Settings
+(Google Translate by default, or DeepL or LibreTranslate) and keeps the
 translations of one reading session, to export as Markdown beside the PDF.
 The PDF itself is never changed. The commands below need no display.
 
@@ -21,23 +22,33 @@ omatranslate translate --to de --from en - < passage.txt
 omatranslate translate --to pt --json "Good morning"
 ```
 
-`--to` is required. `--from` defaults to `auto`, which asks Google to detect
-the language; the JSON answer reports it as `detected`. `languages --json`
-lists every code the service accepts. Each command exits 0 on success and 1
-on failure, with the error on stderr.
+`--to` is required. `--from` defaults to `auto`, which asks the service to
+detect the language; the JSON answer reports it as `detected`, and names the
+provider as `provider`. `languages --json` lists every code the services
+accept. Each command exits 0 on success and 1 on failure, with the error on
+stderr.
 
-The person picked Google Translate as the service, so the text you send
+The person chose the service in Settings. Google Translate takes no account
+or key; DeepL and LibreTranslate use a key stored in
+`~/.config/omatranslate/omatranslate.ini`. Either way the text you send
 leaves the machine. Send only the passage they asked about, never a whole
 document.
 
 ## The app
 
 `omatranslate open <pdf>` opens the PDF in the person's reader. When they
-highlight a passage there, a Translate chip appears beside it; clicking it
-opens the translation in a card over the page, and the passage joins the
-session in Omatranslate's window. That needs their desktop, so do not wait on
-it. Their translations live only in that window for the session; the app
-exports them with Ctrl+E or the Export button as `<pdf-name>.omatranslate.md`.
+highlight a passage there, a Translate chip appears beside it. Nothing is
+translated automatically: only clicking that chip, pressing Enter, or
+`omatranslate translate` sends a request. The translation opens in a card
+over the page, and the passage joins the session in Omatranslate's window.
+That needs their desktop, so do not wait on it. Their translations live only
+in that window for the session; the app exports them with Ctrl+E or the
+Export button as `<pdf-name>.omatranslate.md`.
+
+The background watcher is switched on and off from the Omatranslate widget
+in the Omarchy bar, or with `omatranslate enable`, `disable`, `stop`, and
+`quit`. `omatranslate status --json` reports whether it is running and
+watching.
 
 ## Installing this skill
 

@@ -35,7 +35,16 @@ bare = run()
 check("bare command prints help", bare.returncode == 0 and "Usage: omatranslate" in bare.stdout)
 
 version = run("--version")
-check("version", version.returncode == 0 and "omatranslate 0.1.0" in version.stdout)
+check("version", version.returncode == 0 and version.stdout.startswith("omatranslate "))
+
+status = run("status", "--json")
+try:
+    status_json = json.loads(status.stdout)
+except Exception as error:  # noqa: BLE001 - report whatever went wrong
+    status_json = {}
+    check("status --json parses", False, str(error))
+else:
+    check("status --json parses", "running" in status_json and "enabled" in status_json)
 
 languages = run("languages", "--json")
 try:

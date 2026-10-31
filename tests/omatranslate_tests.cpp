@@ -7,12 +7,15 @@
 #include <QtTest>
 
 #include "backend.h"
+#include "deepltranslate.h"
 #include "filepicker.h"
 #include "googletranslate.h"
 #include "languages.h"
+#include "libretranslate.h"
 #include "placement.h"
 #include "selectionwatcher.h"
 #include "theme.h"
+#include "translationservice.h"
 #include "translator.h"
 
 // Stands in for the portal: records what it was asked to show, and offers a
@@ -41,7 +44,7 @@ public:
 
 // Answers at once, with a translation that shows which language it went into,
 // so a test can see the pair that was used without the network.
-class FakeTranslate : public GoogleTranslate {
+class FakeTranslate : public TranslationService {
     Q_OBJECT
 
 public:
@@ -50,6 +53,8 @@ public:
         QString from;
         QString to;
     };
+
+    explicit FakeTranslate(QObject *parent = nullptr) : TranslationService(nullptr, parent) {}
 
     void translate(const QString &text, const QString &from, const QString &to) override
     {
@@ -62,6 +67,8 @@ public:
         emit finished(QStringLiteral("[%1] %2").arg(to, text), from == QLatin1String("auto")
                                                                   ? QStringLiteral("en") : from);
     }
+
+    void cancel() override {}
 
     QList<Call> calls;
     bool failNext = false;
@@ -152,6 +159,82 @@ private slots:
         QVERIFY(!error.isEmpty());
     }
 
+    void deepLUsesTheHostItsKeyBelongsTo()
+    {
+        QCOMPARE(DeepLTranslate::endpointFor(QStringLiteral("abc:fx")).host(),
+                 QStringLiteral("api-free.deepl.com"));
+        QCOMPARE(DeepLTranslate::endpointFor(QStringLiteral("abc")).host(),
+                 QStringLiteral("api.deepl.com"));
+        QCOMPARE(DeepLTranslate::targetCode(QStringLiteral("pt")), QStringLiteral("PT-PT"));
+        QCOMPARE(DeepLTranslate::targetCode(QStringLiteral("de")), QStringLiteral("DE"));
+        QVERIFY(DeepLTranslate::sourceCode(QStringLiteral("auto")).isEmpty());
+    }
+
+    void deepLReadsItsAnswer()
+    {
+        QString detected, error;
+        QCOMPARE(DeepLTranslate::parse(
+                     R"({"translations":[{"detected_source_language":"EN","text":"Hallo"}]})",
+                     &detected, &error),
+                 QStringLiteral("Hallo"));
+        QCOMPARE(detected, QStringLiteral("en"));
+        QVERIFY(error.isEmpty());
+
+        QVERIFY(DeepLTranslate::parse(R"({"message":"Quota exceeded"})", &detected, &error).isEmpty());
+        QVERIFY(error.contains(QStringLiteral("Quota exceeded")));
+    }
+
+    void libreTranslateUsesTheServerYouName()
+    {
+        QCOMPARE(LibreTranslate::defaultEndpoint().toString(),
+                 QStringLiteral("https://libretranslate.com/translate"));
+        QCOMPARE(LibreTranslate::endpointFrom(QString()).toString(),
+                 QStringLiteral("https://libretranslate.com/translate"));
+        QCOMPARE(LibreTranslate::endpointFrom(QStringLiteral("https://example.org")).toString(),
+                 QStringLiteral("https://example.org/translate"));
+        QCOMPARE(LibreTranslate::endpointFrom(QStringLiteral("http://localhost:5000/translate")).toString(),
+                 QStringLiteral("http://localhost:5000/translate"));
+    }
+
+    void libreTranslateReadsItsAnswer()
+    {
+        QString detected, error;
+        QCOMPARE(LibreTranslate::parse(
+                     R"({"translatedText":"Hallo","detectedLanguage":{"language":"en"}})",
+                     &detected, &error),
+                 QStringLiteral("Hallo"));
+        QCOMPARE(detected, QStringLiteral("en"));
+        QVERIFY(error.isEmpty());
+
+        QVERIFY(LibreTranslate::parse(R"({"error":"Slow down"})", &detected, &error).isEmpty());
+        QVERIFY(error.contains(QStringLiteral("Slow down")));
+    }
+
+    void theServiceRemembersTheProvider()
+    {
+        QTemporaryDir dir;
+        const QString path = dir.filePath("settings.conf");
+        {
+            QSettings settings(path, QSettings::IniFormat);
+            TranslationService service(&settings);
+            QCOMPARE(service.provider(), QStringLiteral("google"));
+            service.setProvider(QStringLiteral("deepl"));
+            service.setDeepLKey(QStringLiteral("key:fx"));
+            QCOMPARE(settings.value("provider").toString(), QStringLiteral("deepl"));
+            QCOMPARE(service.endpoint(), QStringLiteral("https://api-free.deepl.com/v2/translate"));
+            QVERIFY(service.disclosure().contains(QStringLiteral("api-free.deepl.com")));
+            QVERIFY(service.disclosure().contains(QStringLiteral("press Translate")));
+        }
+
+        QSettings settings(path, QSettings::IniFormat);
+        TranslationService service(&settings);
+        QCOMPARE(service.provider(), QStringLiteral("deepl"));
+        QCOMPARE(service.deepLKey(), QStringLiteral("key:fx"));
+        service.setProvider(QStringLiteral("libretranslate"));
+        QCOMPARE(service.endpoint(), QStringLiteral("https://libretranslate.com/translate"));
+        QVERIFY(service.disclosure().contains(QStringLiteral("LibreTranslate")));
+    }
+
     void translatesASelection()
     {
         QTemporaryDir dir;
@@ -159,10 +242,9 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.status(), QStringLiteral("done"));
         QCOMPARE(backend.translation(), QStringLiteral("[de] Erster Satz."));
         QCOMPARE(backend.detected(), QStringLiteral("en"));
@@ -172,15 +254,13 @@ private slots:
         QCOMPARE(translate.calls.first().to, QStringLiteral("de"));
     }
 
-    void autoTranslateOffWaitsForEnter()
+    void aHighlightWaitsForTranslate()
     {
         QTemporaryDir dir;
         QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setAutoTranslate(false);
-        backend.setDebounceInterval(0);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QTest::qWait(50);
@@ -200,10 +280,9 @@ private slots:
         FakeTranslate translate;
         translate.failNext = true;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.status(), QStringLiteral("error"));
         QCOMPARE(backend.error(), translate.failure);
         QCOMPARE(backend.historyCount(), 0);
@@ -218,10 +297,9 @@ private slots:
         FakeTranslate translate;
         translate.failNext = true;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.status(), QStringLiteral("error"));
         backend.retry();
         QCOMPARE(backend.status(), QStringLiteral("done"));
@@ -236,14 +314,15 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 1);
         backend.handleSelection(QStringLiteral("Zweiter Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 2);
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.history().first().toMap().value("text").toString(),
                      QStringLiteral("Erster Satz."));
         QCOMPARE(backend.historyCount(), 2);
@@ -257,10 +336,9 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 1);
         backend.setTargetLanguage(QStringLiteral("da"));
         QCOMPARE(backend.historyCount(), 2);
@@ -274,12 +352,12 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 1);
         backend.handleSelection(QStringLiteral("Zweiter Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 2);
 
         backend.removeEntry(0);
@@ -324,10 +402,9 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
-        backend.setAutoTranslate(true);
 
         backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
         QTRY_COMPARE(backend.historyCount(), 1);
         QVERIFY(backend.unsaved());
 
@@ -369,15 +446,16 @@ private slots:
             QSettings settings(path, QSettings::IniFormat);
             Backend backend(&picker, &translate, nullptr, &settings, "de");
             backend.setTargetLanguage(QStringLiteral("da"));
-            backend.setAutoTranslate(false);
+            backend.setEnabled(false);
             settings.sync();
             QCOMPARE(settings.value("targetLanguage").toString(), QStringLiteral("da"));
+            QCOMPARE(settings.value("enabled").toBool(), false);
         }
 
         QSettings settings(path, QSettings::IniFormat);
         Backend backend(&picker, &translate, nullptr, &settings, "en");
         QCOMPARE(backend.targetLanguage(), QStringLiteral("da"));
-        QCOMPARE(backend.autoTranslate(), false);
+        QCOMPARE(backend.enabled(), false);
         QCOMPARE(backend.sourceLanguage(), QStringLiteral("auto"));
     }
 
@@ -547,9 +625,8 @@ private slots:
         FakePicker picker;
         FakeTranslate translate;
         Backend backend(&picker, &translate, nullptr, &settings, "de");
-        backend.setDebounceInterval(0);
 
-        QCOMPARE(backend.autoTranslate(), false);
+        QCOMPARE(backend.enabled(), true);
         QSignalSpy highlighted(&backend, &Backend::highlighted);
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QCOMPARE(highlighted.count(), 1);
@@ -557,6 +634,25 @@ private slots:
         QTest::qWait(50);
         QCOMPARE(translate.calls.size(), 0);
         QVERIFY(backend.translation().isEmpty());
+    }
+
+    void switchedOffIgnoresHighlights()
+    {
+        QTemporaryDir dir;
+        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+        FakePicker picker;
+        FakeTranslate translate;
+        Backend backend(&picker, &translate, nullptr, &settings, "de");
+        backend.setEnabled(false);
+
+        QSignalSpy highlighted(&backend, &Backend::highlighted);
+        backend.handleSelection(QStringLiteral("Erster Satz."));
+        QCOMPARE(highlighted.count(), 0);
+        QVERIFY(backend.selection().isEmpty());
+
+        backend.setEnabled(true);
+        backend.handleSelection(QStringLiteral("Erster Satz."));
+        QCOMPARE(highlighted.count(), 1);
     }
 
     void placementReadsHyprlandOutput()

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "kartabas.omatranslate",
+  "name": "Omatranslate",
+  "version": "0.2.0",
+  "author": "kartabas",
+  "license": "MIT",
+  "description": "Switch Omatranslate's background watching on or off, and open its window or Settings, from the Omarchy bar.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Omatranslate",
+    "description": "Highlight-to-translate in the background, with quick access to the session window and Settings.",
+    "category": "Productivity",
+    "allowMultiple": false,
+    "defaultSection": "centerEnd",
+    "defaults": {
+      "enabled": true
+    },
+    "schema": [
+      {
+        "key": "enabled",
+        "type": "boolean",
+        "label": "Watch for highlights",
+        "description": "Run Omatranslate in the background. A highlight then shows a Translate chip; nothing is translated until you press it.",
+        "defaultValue": true
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 pkgname=omatranslate
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc='Translate what you highlight in a PDF'
 arch=('x86_64' 'aarch64')

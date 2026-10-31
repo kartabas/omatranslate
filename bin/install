@@ -4,4 +4,8 @@ set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 "$ROOT/bin/build"
 cd "$ROOT/pkgbuild"
-exec makepkg -fsi "$@"
+makepkg -fsi "$@"
+
+# The widget lives in the user's own config, not in the package, so it is
+# added here rather than by the package's install script.
+"$ROOT/build/omatranslate" plugin install

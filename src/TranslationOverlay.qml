@@ -106,6 +106,7 @@ Window {
                     Layout.fillWidth: true
                     text: backend.status === "error" ? qsTr("Translation failed")
                                                      : root.languageLine()
+                    textFormat: Text.PlainText
                     color: backend.status === "error" ? theme.danger : theme.accent
                     font.pixelSize: 12
                     font.letterSpacing: 0.6
@@ -130,6 +131,7 @@ Window {
             Text {
                 width: parent.width
                 text: backend.selection
+                textFormat: Text.PlainText
                 color: theme.muted
                 font.pixelSize: 12
                 lineHeight: 1.35
@@ -184,6 +186,7 @@ Window {
                     id: translationText
                     width: parent.width
                     text: backend.translation
+                    textFormat: Text.PlainText
                     color: theme.foreground
                     font.pixelSize: 18
                     lineHeight: 1.35
@@ -195,10 +198,19 @@ Window {
                 width: parent.width
                 visible: backend.status === "error"
                 text: backend.error
+                textFormat: Text.PlainText
                 color: theme.danger
                 font.pixelSize: 13
                 lineHeight: 1.3
                 wrapMode: Text.Wrap
+            }
+
+            BarButton {
+                visible: backend.translation === "" && backend.status !== "translating"
+                         && backend.status !== "error"
+                text: qsTr("Translate")
+                primary: true
+                onClicked: backend.translateNow()
             }
 
             RowLayout {

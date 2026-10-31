@@ -71,6 +71,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(button.naturalLabel, button.labelRoom)
             text: button.text
+            textFormat: Text.PlainText
             color: button.primary ? button.accentForeground : theme.foreground
             font.pixelSize: 13
             font.weight: button.primary ? Font.DemiBold : Font.Normal
@@ -93,6 +94,7 @@ Rectangle {
         id: measure
         visible: false
         text: button.text
+        textFormat: Text.PlainText
         font: label.font
     }
 }

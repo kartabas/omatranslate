@@ -3,22 +3,26 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QSettings>
+#include <QTimer>
 #include <QUrl>
 #include <cstdio>
 
+#include "appcontroller.h"
 #include "backend.h"
 #include "cli.h"
-#include "googletranslate.h"
+#include "controlserver.h"
 #include "languages.h"
 #include "overlay.h"
 #include "portalfilepicker.h"
 #include "selectionwatcher.h"
 #include "theme.h"
+#include "translationservice.h"
 #include "translator.h"
 
 int main(int argc, char *argv[]) {
@@ -36,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     QGuiApplication app(argc, argv);
     app.setApplicationName("omatranslate");
-    app.setApplicationVersion("0.1.0");
+    app.setApplicationVersion("0.2.0");
 
     // Matches the window to omatranslate.desktop, so the compositor (Wayland
     // app_id) and the launcher pick up the installed icon.
@@ -50,8 +54,39 @@ int main(int argc, char *argv[]) {
     }
     if (command)
         return runCli(QStringList{"omatranslate"} + (first == "--help" || first == "-h" ? QStringList{"help"} : args.mid(1)));
-    if (first == "open")
+
+    // Modes: the background service, a window asking for Settings, or the
+    // ordinary window. Everything else is forwarded to an app already running
+    // so two copies never watch the selection at once.
+    const QString mode = args.value(1);
+    const bool serviceMode = mode == QLatin1String("service");
+    const bool startupSettings = mode == QLatin1String("settings");
+    const bool startupShow = mode == QLatin1String("show");
+    const bool startupTranslate = mode == QLatin1String("translate");
+    if (serviceMode || startupSettings || startupShow || startupTranslate
+        || mode == QLatin1String("open"))
         args.removeAt(1);
+
+    if (!serviceMode) {
+        QString commandName;
+        QJsonObject payload;
+        if (startupSettings) {
+            commandName = QStringLiteral("settings");
+        } else if (startupShow) {
+            commandName = QStringLiteral("show");
+        } else if (startupTranslate) {
+            commandName = QStringLiteral("translate");
+        } else {
+            commandName = QStringLiteral("open");
+            if (args.size() > 1)
+                payload.insert(QStringLiteral("path"), args.at(1));
+        }
+
+        bool connected = false;
+        const QJsonObject reply = ControlServer::send(commandName, payload, 1500, &connected);
+        if (connected)
+            return reply.value(QStringLiteral("ok")).toBool() ? 0 : 1;
+    }
 
     QQuickStyle::setStyle("Material");
 
@@ -63,11 +98,30 @@ int main(int argc, char *argv[]) {
     Theme theme;
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, "omatranslate", "omatranslate");
     PortalFilePicker picker;
-    GoogleTranslate translate;
+    TranslationService translate(&settings);
     SelectionWatcher watcher;
-    Backend backend(&picker, &translate, &watcher, &settings, targetForOmarchyLanguage(translator.language()));
+    Backend backend(&picker, &translate, &watcher, &settings,
+                    targetForOmarchyLanguage(translator.language()));
+    AppController controller(&backend, &translate, serviceMode);
+
+    // Launched by the bar plugin's "on": watch from the start even though the
+    // toggle's own state lives in the bar.
+    if (args.contains(QStringLiteral("--enable")))
+        backend.setEnabled(true);
+
+    ControlServer server;
+    server.setHandler([&controller](const QString &name, const QJsonObject &arguments) {
+        return controller.handle(name, arguments);
+    });
+    if (!server.listen())
+        qWarning("omatranslate: couldn't open the control socket; commands from the bar won't arrive.");
 
     QQmlApplicationEngine engine;
+    // Say why the window didn't open instead of leaving an exit code behind.
+    QObject::connect(&engine, &QQmlEngine::warnings, [](const QList<QQmlError> &warnings) {
+        for (const QQmlError &warning : warnings)
+            fprintf(stderr, "omatranslate: %s\n", qPrintable(warning.toString()));
+    });
     // Declared after the engine, so the card's window is destroyed before the
     // engine that created it.
     Overlay overlay(&backend);
@@ -75,23 +129,23 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("translator", &translator);
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("backend", &backend);
+    engine.rootContext()->setContextProperty("translateService", &translate);
     engine.rootContext()->setContextProperty("overlay", &overlay);
+    engine.rootContext()->setContextProperty("app", &controller);
     engine.load(QUrl("qrc:/Main.qml"));
     if (engine.rootObjects().isEmpty())
         return 1;
+    controller.setWindow(qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst()));
     overlay.attach(&engine);
 
-    // The card belongs to the reading session; closing the app's window ends
-    // it too, so it can never keep the application alive on its own.
-    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst())) {
-        QObject::connect(window, &QWindow::visibleChanged, &overlay, [&overlay](bool visible) {
-            if (!visible)
-                overlay.dismiss();
-        });
-    }
+    // The service starts hidden; the window is shown by the bar, a second
+    // launch, or the plugin's menu.
+    if (serviceMode)
+        controller.hideMain();
 
-    watcher.start();
-    if (args.size() > 1)
+    if (startupSettings && !serviceMode)
+        QTimer::singleShot(0, &controller, &AppController::openSettings);
+    if (args.size() > 1 && !serviceMode)
         backend.openUrl(QUrl::fromUserInput(args.at(1), QDir::currentPath(), QUrl::AssumeLocalFile));
 
     return app.exec();

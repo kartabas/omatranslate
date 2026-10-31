@@ -1,0 +1,17 @@
+{
+  "panel.title": "Omatranslate",
+  "panel.stateOff": "Off",
+  "panel.stateWatching": "Watching for highlights",
+  "panel.statePaused": "Paused, session kept open",
+  "panel.stateStarting": "Starting…",
+  "panel.watch": "Watch for highlights",
+  "panel.watchDetail": "Run in the background. A highlight shows a Translate chip; nothing is sent until you press it.",
+  "panel.session": {
+    "one": "%1 passage in this session",
+    "other": "%1 passages in this session"
+  },
+  "panel.provider": "Translations go to %1.",
+  "panel.manual": "Highlight text in your PDF reader, then press Translate. Nothing translates by itself.",
+  "panel.open": "Open",
+  "panel.settings": "Settings"
+}

@@ -1,31 +1,25 @@
 #pragma once
 
 #include <QNetworkAccessManager>
-#include <QObject>
 #include <QPointer>
 #include <QUrl>
-#include <QVector>
 
-// One piece of a long passage, and the whitespace that separated it from the
-// piece before it, so the translated pieces can be put back together the way
-// the original was laid out.
-struct TranslationChunk {
-    QString text;
-    QString join;
-};
+#include "translationprovider.h"
 
 // Google Translate through the endpoint its own browser extension uses. No key
 // and no account: the person asked for this and the app says plainly that the
 // text they select leaves the machine.
-class GoogleTranslate : public QObject {
+class GoogleTranslate : public TranslationProvider {
     Q_OBJECT
 
 public:
     explicit GoogleTranslate(const QUrl &endpoint = {}, QObject *parent = nullptr);
     ~GoogleTranslate() override = default;
 
-    virtual void translate(const QString &text, const QString &from, const QString &to);
-    void cancel();
+    void translate(const QString &text, const QString &from, const QString &to) override;
+    void cancel() override;
+    QString name() const override;
+    QString endpoint() const override;
 
     static QUrl defaultEndpoint();
     static QVector<TranslationChunk> chunk(const QString &text, int limit = 3000);
@@ -33,10 +27,6 @@ public:
     // Returns the translation, sets the detected source language, and leaves an
     // error message when Google answered with something other than a result.
     static QString parse(const QByteArray &body, QString *detected, QString *error);
-
-signals:
-    void finished(const QString &translation, const QString &detected);
-    void failed(const QString &message);
 
 private:
     void sendNext();

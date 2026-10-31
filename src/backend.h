@@ -6,12 +6,13 @@
 #include <QVariantList>
 
 class FilePicker;
-class GoogleTranslate;
 class SelectionWatcher;
+class TranslationService;
 
 // The app's one job: take the text highlighted in the PDF reader, translate it
 // for the selected language pair, and keep the session's translations to
 // export as a Markdown file beside the PDF. The PDF itself is never touched.
+// Translation is always explicit: a highlight only offers a Translate action.
 class Backend : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString documentPath READ documentPath NOTIFY documentChanged)
@@ -23,7 +24,7 @@ class Backend : public QObject {
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString notice READ notice NOTIFY noticeChanged)
-    Q_PROPERTY(bool autoTranslate READ autoTranslate NOTIFY changed)
+    Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
     Q_PROPERTY(QString sourceLanguage READ sourceLanguage NOTIFY changed)
     Q_PROPERTY(QString targetLanguage READ targetLanguage NOTIFY changed)
     Q_PROPERTY(QVariantList history READ history NOTIFY historyChanged)
@@ -32,7 +33,7 @@ class Backend : public QObject {
     Q_PROPERTY(QString watchError READ watchError NOTIFY changed)
 
 public:
-    Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatcher *watcher,
+    Backend(FilePicker *picker, TranslationService *translate, SelectionWatcher *watcher,
             QSettings *settings = nullptr, const QString &defaultTarget = {}, QObject *parent = nullptr);
 
     QString documentPath() const { return m_documentPath; }
@@ -44,7 +45,7 @@ public:
     QString status() const { return m_status; }
     QString error() const { return m_error; }
     QString notice() const { return m_notice; }
-    bool autoTranslate() const { return m_autoTranslate; }
+    bool enabled() const { return m_enabled; }
     QString sourceLanguage() const { return m_source; }
     QString targetLanguage() const { return m_target; }
     QVariantList history() const { return m_history; }
@@ -63,7 +64,6 @@ public:
 
     // Tests drive the selection directly instead of through wl-paste.
     void handleSelection(const QString &text);
-    void setDebounceInterval(int milliseconds);
 
 public slots:
     void openDocument();
@@ -75,7 +75,7 @@ public slots:
     void exportTranslations();
     void setSourceLanguage(const QString &code);
     void setTargetLanguage(const QString &code);
-    void setAutoTranslate(bool enabled);
+    void setEnabled(bool enabled);
     void swapLanguages();
     void showEntry(int index);
     void removeEntry(int index);
@@ -87,6 +87,7 @@ signals:
     // A new highlight, as opposed to a passage picked from the session's
     // history or the current one being shown again.
     void highlighted(const QString &text);
+    void enabledChanged();
     void historyChanged();
     void documentChanged();
     void noticeChanged();
@@ -105,11 +106,12 @@ private:
     void saveSelection();
 
     FilePicker *m_picker = nullptr;
-    GoogleTranslate *m_translate = nullptr;
+    TranslationService *m_translate = nullptr;
+    SelectionWatcher *m_watcher = nullptr;
     QSettings *m_settings = nullptr;
     QString m_source = QStringLiteral("auto");
     QString m_target = QStringLiteral("en");
-    bool m_autoTranslate = false;
+    bool m_enabled = false;
 
     QString m_documentPath;
     QString m_documentName;
@@ -131,6 +133,5 @@ private:
     QHash<QString, QString> m_cache;
     QHash<QString, QString> m_cacheDetected;
 
-    QTimer m_debounce;
     QTimer m_noticeTimer;
 };

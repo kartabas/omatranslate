@@ -6,6 +6,10 @@ beside it, and the translation opens right there, over the page. Everything
 you translate during a session also gathers in the app's window, to export as
 Markdown when you're done.
 
+Omatranslate runs as an Omarchy bar widget, so watching can be switched on or
+off from the bar. Nothing is ever translated just because you highlighted
+something: the chip is an offer, and only pressing Translate sends a request.
+
 ![Omatranslate translating a passage](docs/screenshot.png)
 
 The PDF is opened in your own reader and is never changed. Translations are
@@ -19,9 +23,14 @@ cd omatranslate
 ./bin/install
 ```
 
-`bin/install` builds the app and installs it with `makepkg`. It then appears
-in the app launcher (`Super + Space`) and in the "Open with" menu for PDFs.
-It does not take over as your default PDF reader.
+`bin/install` builds the app, installs it with `makepkg`, and puts the
+Omatranslate widget in the Omarchy bar. It then appears in the app launcher
+(`Super + Space`) and in the "Open with" menu for PDFs. It does not take over
+as your default PDF reader.
+
+If the app is installed already, `omatranslate plugin install` adds or
+refreshes only the bar widget. `omatranslate plugin remove` takes it out
+again. Both leave every other bar widget where it was.
 
 Requirements, all part of Omarchy: `qt6-base`, `qt6-declarative`,
 `qt6-wayland`, `qt6-svg`, `layer-shell-qt`, `xdg-desktop-portal`,
@@ -52,17 +61,59 @@ dialog, that file is what you chose.
 Nothing is written until you export, and quitting with unexported
 translations asks first.
 
+## The bar widget
+
+The bar widget is the on/off switch for the background service. It shows
+whether Omatranslate is watching, paused, or off, and its menu opens the
+session window or Settings.
+
+- **Watch for highlights** on starts the hidden service. Highlights then show
+  the Translate chip.
+- Switching it off runs `omatranslate stop`: watching stops and the process
+  quits, unless the session still has translations you haven't exported. In
+  that case the window stays open so you can export first, and the app says
+  so.
+
+The same switches work from a terminal:
+
+```sh
+omatranslate enable     # start watching in the background
+omatranslate disable    # pause, keeping the session open
+omatranslate stop       # pause and quit, unless a session needs exporting
+omatranslate quit       # quit, service included
+omatranslate status     # what is running, watching, or paused
+```
+
 ## Settings
 
 The language pair sits in the top bar: click it to choose the source and
 target without leaving the page. The gear (or `Ctrl+,`) opens the same
-choices with the rest of the settings. The source can be auto-detected; the
-target starts as your Omarchy language and can be any of the languages Google
-Translate accepts.
+choices, the translation service, and the background switch. The source can
+be auto-detected; the target starts as your Omarchy language and can be any
+of the languages the chosen service accepts.
 
-By default a highlight waits for you to click **Translate**. Turn on
-"Translate new highlights" in the gear if you would rather have the card open
-as soon as you let go.
+Highlighting never translates by itself. A highlight only offers the chip;
+click it, or press `Enter` in the window, to send the passage.
+
+### Translation service
+
+Settings lets you pick where translations are requested:
+
+- **Google Translate (default)** — no account or key, using the endpoint
+  Google's own browser extension calls.
+- **DeepL** — your own API key. Keys ending in `:fx` use DeepL's free host;
+  other keys use the paid host.
+- **LibreTranslate** — a server you name, such as your own, with an optional
+  API key. A bare host gets `/translate` appended.
+
+The settings sheet always spells out the exact address the app will use, what
+is sent there, and where credentials live. Selected text and credentials go
+only to that service. DeepL and LibreTranslate credentials are stored in
+`~/.config/omatranslate/omatranslate.ini`, readable only by you
+(`0600`). Google requests use no account or key.
+
+Nothing is translated until you press Translate. Omatranslate keeps no copy
+after you quit unless you export it.
 
 ## Keyboard
 
@@ -73,7 +124,7 @@ as soon as you let go.
 | `Enter` | Translate the passage now |
 | `Ctrl+E` | Export the session as Markdown |
 | `Ctrl+Z` | Undo removing translations |
-| `Ctrl+,` | Choose the languages |
+| `Ctrl+,` | Open Settings |
 | `?` | Show every shortcut |
 | `Q` | Quit |
 | `Esc` | Close this list |
@@ -86,27 +137,23 @@ The same binary works without a display, for scripts and coding agents.
 omatranslate translate --to de "The cat sat on the mat."
 omatranslate translate --to pt --json "Good morning"
 omatranslate translate --from en --to da - < passage.txt
-omatranslate languages              # every code Google Translate accepts
+omatranslate languages              # every code the services accept
 omatranslate languages --json
+omatranslate status --json
+omatranslate plugin install         # add the Omarchy bar widget
 omatranslate help [command]
 omatranslate skill                  # the agent skill; skill install copies it
 ```
 
-`--to` is required; `--from` defaults to `auto`. Each command exits 0 on
-success and 1 on failure, with the error on stderr. `--json` reports the
-detected source language alongside the translation.
+`translate` uses whichever service is selected in Settings, so a script and
+the window never disagree about where text is sent. `--to` is required;
+`--from` defaults to `auto`. Each command exits 0 on success and 1 on
+failure, with the error on stderr. `--json` reports the detected source
+language and the provider alongside the translation.
 
 `omatranslate skill install` writes the bundled skill to
 `~/.agents/skills/omatranslate` and links it into `~/.claude/skills` when
 that directory exists, so agents know how to translate with the app.
-
-## Google Translate
-
-Omatranslate uses Google Translate's unofficial web endpoint. The passage you
-highlight is sent to Google, and only that passage; the rest of the document
-stays on your machine. There is no account and no API key, so requests can be
-rate-limited; the app says so and lets you try again. If that trade-off isn't
-right for a document, don't highlight from it.
 
 ## Languages
 
@@ -120,7 +167,7 @@ language: a German interface can translate into Danish.
 ```sh
 ./bin/build     # qmake6 + make into build/omatranslate
 ./bin/test      # Qt Test offscreen, plus the command-line checks
-./bin/install   # build, package, and install
+./bin/install   # build, package, install, and add the bar widget
 ```
 
 ## License

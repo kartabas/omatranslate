@@ -11,5 +11,10 @@
         <file alias="i18n/en.json">i18n/en.json</file>
         <file alias="i18n/de.json">i18n/de.json</file>
         <file alias="i18n/da.json">i18n/da.json</file>
+        <file alias="omarchy/manifest.json">omarchy/manifest.json</file>
+        <file alias="omarchy/Panel.qml">omarchy/Panel.qml</file>
+        <file alias="omarchy/i18n/en.json">omarchy/i18n/en.json</file>
+        <file alias="omarchy/i18n/de.json">omarchy/i18n/de.json</file>
+        <file alias="omarchy/i18n/da.json">omarchy/i18n/da.json</file>
     </qresource>
 </RCC>

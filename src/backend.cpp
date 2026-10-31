@@ -13,9 +13,9 @@
 #include <algorithm>
 
 #include "filepicker.h"
-#include "googletranslate.h"
 #include "languages.h"
 #include "selectionwatcher.h"
+#include "translationservice.h"
 
 namespace {
 
@@ -36,14 +36,15 @@ QString shortened(const QString &text) {
 
 }
 
-Backend::Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatcher *watcher,
+Backend::Backend(FilePicker *picker, TranslationService *translate, SelectionWatcher *watcher,
                  QSettings *settings, const QString &defaultTarget, QObject *parent)
-    : QObject(parent), m_picker(picker), m_translate(translate), m_settings(settings) {
+    : QObject(parent), m_picker(picker), m_translate(translate), m_watcher(watcher),
+      m_settings(settings) {
     const QString fallbackTarget = isSupportedLanguage(defaultTarget) ? defaultTarget : QStringLiteral("en");
     if (m_settings) {
         m_source = m_settings->value("sourceLanguage", "auto").toString();
         m_target = m_settings->value("targetLanguage", fallbackTarget).toString();
-        m_autoTranslate = m_settings->value("autoTranslate", false).toBool();
+        m_enabled = m_settings->value("enabled", true).toBool();
     } else {
         m_target = fallbackTarget;
     }
@@ -58,8 +59,8 @@ Backend::Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatche
         connect(m_picker, &FilePicker::failed, this, &Backend::setNotice);
     }
     if (m_translate) {
-        connect(m_translate, &GoogleTranslate::finished, this, [this](const QString &translation,
-                                                                     const QString &detected) {
+        connect(m_translate, &TranslationService::finished, this, [this](const QString &translation,
+                                                                           const QString &detected) {
             // A reply that arrives after the passage was replaced is stale, and
             // replacing the new passage with it would be worse than waiting.
             if (m_pendingText.isEmpty())
@@ -73,7 +74,7 @@ Backend::Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatche
             emit changed();
             addHistory(text, translation, detected, target, document);
         });
-        connect(m_translate, &GoogleTranslate::failed, this, [this](const QString &message) {
+        connect(m_translate, &TranslationService::failed, this, [this](const QString &message) {
             m_pendingText.clear();
             m_error = message;
             setStatus(QStringLiteral("error"));
@@ -83,11 +84,9 @@ Backend::Backend(FilePicker *picker, GoogleTranslate *translate, SelectionWatche
     if (watcher) {
         m_watchError = watcher->error();
         connect(watcher, &SelectionWatcher::textChanged, this, &Backend::handleSelection);
+        if (m_enabled)
+            watcher->start();
     }
-
-    m_debounce.setSingleShot(true);
-    m_debounce.setInterval(300);
-    connect(&m_debounce, &QTimer::timeout, this, &Backend::startTranslation);
 
     m_noticeTimer.setSingleShot(true);
     m_noticeTimer.setInterval(5000);
@@ -123,10 +122,6 @@ QVariantList Backend::languages() const {
 
 QString Backend::languageName(const QString &code) const {
     return ::languageName(code);
-}
-
-void Backend::setDebounceInterval(int milliseconds) {
-    m_debounce.setInterval(qMax(0, milliseconds));
 }
 
 void Backend::openDocument() {
@@ -170,21 +165,22 @@ void Backend::openInReader() {
 }
 
 void Backend::handleSelection(const QString &text) {
+    // With the service switched off the app stays quiet: a highlight in
+    // another window must not put a chip on screen.
+    if (!m_enabled)
+        return;
+
     const QString cleaned = clean(text);
     if (cleaned == m_selection)
         return;
 
-    m_debounce.stop();
     m_selection = cleaned;
     m_translation.clear();
     m_detected.clear();
     m_error.clear();
     m_pendingText.clear();
-    setStatus(cleaned.isEmpty() ? QStringLiteral("idle")
-                                : m_autoTranslate ? QStringLiteral("waiting") : QStringLiteral("idle"));
+    setStatus(QStringLiteral("idle"));
     emit changed();
-    if (!cleaned.isEmpty() && m_autoTranslate)
-        m_debounce.start();
     if (!cleaned.isEmpty())
         emit highlighted(cleaned);
 }
@@ -204,7 +200,6 @@ void Backend::retry() {
 }
 
 void Backend::startTranslation() {
-    m_debounce.stop();
     if (m_selection.isEmpty() || !m_translate)
         return;
 
@@ -379,7 +374,6 @@ void Backend::showEntry(int index) {
     if (index < 0 || index >= m_history.size())
         return;
     const QVariantMap entry = m_history.at(index).toMap();
-    m_debounce.stop();
     m_pendingText.clear();
     m_selection = entry.value("text").toString();
     m_translation = entry.value("translation").toString();
@@ -447,14 +441,22 @@ void Backend::setTargetLanguage(const QString &code) {
         startTranslation();
 }
 
-void Backend::setAutoTranslate(bool enabled) {
-    if (enabled == m_autoTranslate)
+void Backend::setEnabled(bool enabled) {
+    if (enabled == m_enabled)
         return;
-    m_autoTranslate = enabled;
-    saveSelection();
+    m_enabled = enabled;
+    if (m_settings) {
+        m_settings->setValue("enabled", enabled);
+        m_settings->sync();
+    }
+    if (m_watcher) {
+        if (enabled)
+            m_watcher->start();
+        else
+            m_watcher->stop();
+    }
+    emit enabledChanged();
     emit changed();
-    if (enabled && !m_selection.isEmpty() && m_translation.isEmpty())
-        startTranslation();
 }
 
 void Backend::swapLanguages() {
@@ -474,7 +476,6 @@ void Backend::saveSelection() {
         return;
     m_settings->setValue("sourceLanguage", m_source);
     m_settings->setValue("targetLanguage", m_target);
-    m_settings->setValue("autoTranslate", m_autoTranslate);
     m_settings->sync();
 }
 

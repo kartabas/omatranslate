@@ -163,13 +163,8 @@ void Overlay::onHighlighted(const QString &text)
     if (!m_placement.found)
         return;
 
-    if (m_backend && m_backend->autoTranslate()) {
-        setMode(QStringLiteral("card"));
-        showWindow();
-    } else {
-        setMode(QStringLiteral("chip"));
-        showWindow();
-    }
+    setMode(QStringLiteral("chip"));
+    showWindow();
 }
 
 void Overlay::onBackendChanged()
@@ -180,14 +175,21 @@ void Overlay::onBackendChanged()
     const QString selection = m_backend->selection();
     m_lastSelection = selection;
 
+    if (!m_backend->enabled()) {
+        if (m_mode != QLatin1String("hidden"))
+            dismiss();
+        return;
+    }
+
     if (selection.isEmpty()) {
         if (m_mode != QLatin1String("hidden"))
             dismiss();
         return;
     }
 
-    // Enter in the main window, the top-bar Translate button, or the automatic
-    // switch: once a translation starts, the card is what should be visible.
+    // Enter in the main window, the top-bar Translate button, or the card's
+    // own Translate action: once a translation starts, the card is what should
+    // be visible.
     if (m_backend->status() == QLatin1String("translating")
         && m_mode != QLatin1String("card")) {
         setMode(QStringLiteral("card"));

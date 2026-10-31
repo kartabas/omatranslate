@@ -1,0 +1,17 @@
+{
+  "panel.title": "Omatranslate",
+  "panel.stateOff": "Aus",
+  "panel.stateWatching": "Achtet auf Markierungen",
+  "panel.statePaused": "Pausiert, Sitzung bleibt offen",
+  "panel.stateStarting": "Wird gestartet …",
+  "panel.watch": "Auf Markierungen achten",
+  "panel.watchDetail": "Läuft im Hintergrund. Eine Markierung zeigt „Übersetzen“; nichts wird gesendet, bevor du es drückst.",
+  "panel.session": {
+    "one": "%1 Absatz in dieser Sitzung",
+    "other": "%1 Absätze in dieser Sitzung"
+  },
+  "panel.provider": "Übersetzungen gehen an %1.",
+  "panel.manual": "Markiere Text in deinem PDF-Reader und drücke dann Übersetzen. Nichts wird automatisch übersetzt.",
+  "panel.open": "Öffnen",
+  "panel.settings": "Einstellungen"
+}
