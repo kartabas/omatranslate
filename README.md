@@ -14,7 +14,7 @@ kept for the session only, and written beside the PDF when you export them.
 ## Install
 
 ```sh
-git clone <this repository> omatranslate
+git clone https://github.com/kartabas/omatranslate omatranslate
 cd omatranslate
 ./bin/install
 ```
