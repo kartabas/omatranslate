@@ -66,13 +66,17 @@ translations asks first.
 The widget runs Omatranslate in the background and opens its window only when
 you ask. It shows whether the service is watching, paused, or stopped.
 
-- **Start** runs `omatranslate enable`: the service starts hidden, and a
+- **Watching** runs `omatranslate enable`: the service starts hidden, and a
   highlight in your reader then shows the Translate chip. No window opens.
+- **Paused** runs `omatranslate disable`: watching stops and the chip stays
+  hidden, but the process and the session stay in memory. Choosing it while
+  the app is stopped starts the process paused.
+- **Stopped** runs `omatranslate stop`: the process quits, unless the session
+  still has translations you haven't exported. In that case the window stays
+  open so you can export first, and the widget says so.
 - **Open app** shows the window on top of what you are reading. Closing the
   window puts it back in the background; watching and the session carry on.
-- **Stop** runs `omatranslate stop`: watching stops and the process quits,
-  unless the session still has translations you haven't exported. In that
-  case the window stays open so you can export first, and the widget says so.
+  After Stop it brings the process back paused.
 - **Settings** opens the window straight to the translation service and
   language choices.
 
@@ -83,13 +87,14 @@ there is only ever one process watching your selection.
 The same switches work from a terminal:
 
 ```sh
-omatranslate enable     # start watching in the background
-omatranslate open       # show the window (starting the service if needed)
-omatranslate hide       # put the window away, keep watching
-omatranslate disable    # pause, keeping the session open
-omatranslate stop       # pause and quit, unless a session needs exporting
-omatranslate quit       # quit, service included
-omatranslate status     # what is running, watching, or paused
+omatranslate enable            # start watching in the background
+omatranslate service --paused  # run in the background without watching
+omatranslate open              # show the window (starting the service if needed)
+omatranslate hide              # put the window away, keep watching
+omatranslate disable           # pause, keeping the session open
+omatranslate stop              # pause and quit, unless a session needs exporting
+omatranslate quit              # quit, service included
+omatranslate status            # what is running, watching, or paused
 ```
 
 ## Settings

@@ -386,8 +386,8 @@ int plugin(const QStringList &arguments) {
         if (parser.isSet("json"))
             print(QJsonObject{{"ok", true}, {"installed", folder}, {"bar", shellConfigPath()}});
         else
-            print(stdout, "Installed the Omatranslate widget. It is in the bar's centre-end section; "
-                          "Omarchy picks it up as soon as shell.json is saved.");
+            print(stdout, "Installed the Omatranslate widget in the bar's centre-end section. "
+                          "If the bar still shows an older panel, run omarchy-restart-shell.");
         return 0;
     }
 
@@ -484,7 +484,7 @@ QString cliSummary() {
            "  settings                      Open Omatranslate straight to Settings\n"
            "  show                          Show the window of a running Omatranslate\n"
            "  hide                          Put the window away, keeping Omatranslate running\n"
-           "  service [--enable]            Run hidden in the background (the bar plugin starts this)\n\n"
+           "  service [--enable|--paused]   Run hidden in the background (the bar widget starts this)\n\n"
            "Commands that need no display (omatranslate help <command> for options):\n"
            "  translate [options] <text>    Translate a passage, or - to read standard input\n"
            "  languages                     List the language codes the translators accept\n"

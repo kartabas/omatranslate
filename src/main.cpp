@@ -113,9 +113,12 @@ int main(int argc, char *argv[]) {
                     targetForOmarchyLanguage(translator.language()));
     AppController controller(&backend, &translate, serviceMode);
 
-    // Launched by the bar plugin's "on": watch from the start even though the
-    // toggle's own state lives in the bar.
-    if (args.contains(QStringLiteral("--enable")))
+    // Launched by the bar widget: --enable starts watching straight away,
+    // --paused starts the process with the chip switched off. Both persist,
+    // so the next launch remembers which one was asked for.
+    if (args.contains(QStringLiteral("--paused")))
+        backend.setEnabled(false);
+    else if (args.contains(QStringLiteral("--enable")))
         backend.setEnabled(true);
 
     ControlServer server;

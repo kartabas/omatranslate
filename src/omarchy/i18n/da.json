@@ -1,19 +1,25 @@
 {
   "panel.title": "Omatranslate",
-  "panel.stateOff": "Stoppet",
   "panel.stateWatching": "Holder øje med markeringer",
-  "panel.statePaused": "Sat på pause, sessionen er åben",
+  "panel.statePaused": "Sat på pause, sessionen bevares",
+  "panel.statePausedOnly": "Sat på pause",
   "panel.stateStarting": "Starter …",
-  "panel.watchDetail": "Start kører den skjult i baggrunden. En markering viser så en Oversæt-knap; intet sendes, før du trykker på den. Åbn app viser vinduet.",
+  "panel.stateOff": "Stoppet",
+  "panel.mode": "Tilstand",
+  "panel.modeWatch": "Aktiv",
+  "panel.modePause": "Pause",
+  "panel.modeStop": "Stoppet",
+  "panel.detailWatch": "Kører skjult i baggrunden. En markering viser en Oversæt-knap; intet sendes, før du trykker på den.",
+  "panel.detailPause": "Holder op med at holde øje, men beholder sessionen i hukommelsen. Starter baggrundsprocessen, hvis den ikke kører.",
+  "panel.detailStop": "Afslutter baggrundsprocessen. Åbn app henter den tilbage på pause.",
+  "panel.actions": "Handlinger",
+  "panel.openApp": "Åbn app",
+  "panel.settings": "Indstillinger",
   "panel.session": {
     "one": "%1 afsnit i denne session",
     "other": "%1 afsnit i denne session"
   },
+  "panel.sessionEmpty": "Intet oversat endnu.",
   "panel.provider": "Oversættelser sendes til %1.",
-  "panel.manual": "Markér tekst i din PDF-læser, og tryk derefter Oversæt. Intet oversættes automatisk.",
-  "panel.settings": "Indstillinger",
-  "panel.start": "Start",
-  "panel.stop": "Stop",
-  "panel.openApp": "Åbn app",
-  "panel.statePausedOnly": "Sat på pause"
+  "panel.manual": "Markér tekst i din PDF-læser, og tryk derefter Oversæt. Intet oversættes af sig selv."
 }

@@ -7,10 +7,11 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 
-// The Omatranslate widget in the Omarchy bar. Start runs the service hidden,
-// Stop ends it (or keeps it open only when the session still has translations
-// waiting to be exported), and Open app shows its window. Everything else it
-// asks the running app to do over the app's own control socket.
+// The Omatranslate widget in the Omarchy bar. The mode control is the whole
+// switch: Watching runs the service hidden, Paused stops the chip but keeps
+// the session in memory, Stopped ends the process. Open app shows the window;
+// closing it puts the app back in the background. Everything is asked of the
+// running app over its own control socket.
 Panel {
   id: root
   moduleName: "kartabas.omatranslate"
@@ -21,8 +22,8 @@ Panel {
   readonly property color dim: Qt.darker(foreground, 1.55)
   readonly property string fontFamily: Style.font.family
 
-  // The persisted switch. It is the widget's own shell.json entry, so it stays
-  // with the bar layout and is the one thing this plugin remembers.
+  // The persisted switch, kept in this widget's own shell.json entry. It is
+  // what starts the service again when the bar comes up.
   readonly property bool enabled: setting("enabled", true)
 
   // What the last `omatranslate status --json` said. Null until it answers.
@@ -33,16 +34,30 @@ Panel {
   readonly property bool watching: running && status.enabled === true
   readonly property int historyCount: status ? Number(status.historyCount || 0) : 0
   readonly property string providerName: status ? String(status.providerName || "") : ""
-  readonly property string endpoint: status ? String(status.endpoint || "") : ""
-  readonly property bool serviceRunning: running && status.service === true
 
-  readonly property string stateText: root.running
-    ? (root.watching ? strings.t("panel.stateWatching")
-       : root.historyCount > 0 ? strings.t("panel.statePaused")
-       : strings.t("panel.statePausedOnly"))
-    : (root.acting ? strings.t("panel.stateStarting") : strings.t("panel.stateOff"))
+  // The three modes, in the order the control shows them.
+  readonly property var modes: [
+    { value: "watch", label: strings.t("panel.modeWatch") },
+    { value: "pause", label: strings.t("panel.modePause") },
+    { value: "stop", label: strings.t("panel.modeStop") }
+  ]
+  readonly property string mode: root.watching ? "watch" : root.running ? "pause" : "stop"
+
+  readonly property string stateText: root.mode === "watch" ? strings.t("panel.stateWatching")
+    : root.mode === "pause" ? (root.historyCount > 0
+        ? strings.t("panel.statePaused") : strings.t("panel.statePausedOnly"))
+    : root.acting ? strings.t("panel.stateStarting") : strings.t("panel.stateOff")
+
+  readonly property string modeDetail: root.mode === "watch" ? strings.t("panel.detailWatch")
+    : root.mode === "pause" ? strings.t("panel.detailPause")
+    : strings.t("panel.detailStop")
 
   readonly property string tooltip: "Omatranslate — " + root.stateText
+
+  // Keyboard cursor: row 0 is the mode control, row 1 the action buttons.
+  property int cursorRow: 0
+  property int cursorCol: 0
+  readonly property var rowLengths: [root.modes.length, 2]
 
   Commons.Translations {
     id: strings
@@ -67,13 +82,19 @@ Panel {
       statusProcess.running = true
   }
 
-  // Start runs the service hidden; the window is opened on demand. Stop ends
-  // it, unless the session still has translations that were not exported — in
-  // that case it keeps itself open and the state line says so.
-  function setEnabled(value) {
+  // Watching starts the service hidden; Paused keeps it in memory with the
+  // chip switched off (starting it that way when nothing runs); Stopped ends
+  // it, unless the session still has translations that were not exported.
+  function setMode(mode) {
+    if (mode === "watch" ? root.watching : mode === root.mode) return
     root.acting = true
-    if (root.enabled !== !!value) save("enabled", !!value)
-    run([value ? "enable" : "stop"])
+    if (root.enabled !== (mode === "watch")) save("enabled", mode === "watch")
+    if (mode === "watch")
+      run(["enable"])
+    else if (mode === "pause")
+      run(root.running ? ["disable"] : ["service", "--paused"])
+    else
+      run(["stop"])
     settleTimer.restart()
   }
 
@@ -87,11 +108,33 @@ Panel {
     root.close()
   }
 
+  function moveCursor(dx, dy) {
+    if (dy !== 0) {
+      root.cursorRow = Math.max(0, Math.min(root.rowLengths.length - 1, root.cursorRow + dy))
+      root.cursorCol = Math.min(root.cursorCol, root.rowLengths[root.cursorRow] - 1)
+    } else if (dx !== 0) {
+      var length = root.rowLengths[root.cursorRow]
+      root.cursorCol = (root.cursorCol + dx + length) % length
+    }
+  }
+
+  function activateCursor() {
+    if (root.cursorRow === 0) {
+      root.setMode(root.modes[root.cursorCol].value)
+    } else if (root.cursorCol === 0) {
+      root.openWindow()
+    } else {
+      root.openSettings()
+    }
+  }
+
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
   onOpenedChanged: if (opened) {
     root.acting = false
+    root.cursorRow = 0
+    root.cursorCol = root.modes.findIndex(function (m) { return m.value === root.mode })
     refresh()
     keys.forceActiveFocus()
   }
@@ -114,8 +157,8 @@ Panel {
         Text {
           anchors.centerIn: parent
           text: "Aa"
-          color: root.enabled ? root.foreground : root.dim
-          opacity: root.enabled ? 1 : 0.6
+          color: root.watching ? root.foreground : root.dim
+          opacity: root.watching ? 1 : 0.6
           font.family: root.fontFamily
           font.pixelSize: Style.font.title
           font.bold: true
@@ -140,6 +183,13 @@ Panel {
       anchors.fill: parent
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
+      onMoveRequested: function(dx, dy) { root.moveCursor(dx, dy) }
+      onActivateRequested: root.activateCursor()
+      onTextKey: function(text, modifiers) {
+        if (text === "s") root.setMode(root.mode === "watch" ? "stop" : "watch")
+        else if (text === "o") root.openWindow()
+        else if (text === ",") root.openSettings()
+      }
     }
 
     Flickable {
@@ -154,99 +204,211 @@ Panel {
       Column {
         id: content
         width: parent.width
-        spacing: Style.space(10)
+        spacing: Style.space(12)
 
-        Text {
+        // ---------- Hero: mark, name, state ----------
+        PanelHero {
           width: parent.width
-          text: strings.t("panel.title")
-          color: root.foreground
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.title
-          font.bold: true
+          foreground: root.foreground
+          fontFamily: root.fontFamily
+          title: strings.t("panel.title")
+          meta: root.stateText
+          iconComponent: Component {
+            Rectangle {
+              width: Style.space(38)
+              height: Style.space(38)
+              radius: Style.cornerRadius
+              color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b,
+                             root.watching ? 0.10 : 0.04)
+
+              Text {
+                anchors.centerIn: parent
+                text: "Aa"
+                color: root.watching ? root.foreground : root.dim
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.title
+                font.bold: true
+              }
+            }
+          }
+          trailingControl: Component {
+            Item {
+              width: Style.space(10)
+              height: Style.space(10)
+
+              Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: root.watching ? Commons.Color.accent : root.dim
+                opacity: root.watching ? 1 : 0.45
+
+                Behavior on color { ColorAnimation { duration: Style.duration(180) } }
+              }
+            }
+          }
         }
 
-        Text {
-          width: parent.width
-          text: root.stateText
-          textFormat: Text.PlainText
-          color: root.watching ? root.foreground : root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
+        // ---------- Mode: one row of three, the panel's main control ----------
+        PanelSeparator {
+          foreground: root.foreground
         }
 
-        Rectangle {
-          width: parent.width
-          height: Style.space(1)
-          color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.10)
-        }
-
-        Text {
-          width: parent.width
-          text: strings.t("panel.watchDetail")
-          textFormat: Text.PlainText
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
-          wrapMode: Text.WordWrap
-        }
-
-        RowLayout {
+        Column {
           width: parent.width
           spacing: Style.space(8)
 
-          Button {
-            // The process, not the window: start runs it hidden, stop ends it
-            // (or leaves the session open when translations are waiting).
-            text: root.running ? strings.t("panel.stop") : strings.t("panel.start")
-            active: true
-            onClicked: root.setEnabled(!root.running)
+          PanelSectionHeader {
+            text: strings.t("panel.mode")
+            foreground: root.foreground
+            fontFamily: root.fontFamily
           }
-          Button {
-            text: strings.t("panel.openApp")
-            bordered: true
-            onClicked: root.openWindow()
+
+          Row {
+            id: modeRow
+            width: parent.width
+            spacing: Style.space(6)
+
+            readonly property real cellWidth: root.modes.length > 0
+              ? (width - spacing * (root.modes.length - 1)) / root.modes.length
+              : 0
+
+            Repeater {
+              model: root.modes
+
+              Button {
+                required property var modelData
+                required property int index
+                width: modeRow.cellWidth
+                text: modelData.label
+                fontSize: Style.font.bodySmall
+                foreground: root.foreground
+                fontFamily: root.fontFamily
+                bordered: true
+                selected: root.mode === modelData.value
+                hasCursor: root.cursorRow === 0 && root.cursorCol === index
+                onClicked: root.setMode(modelData.value)
+                onHovered: function(h) {
+                  if (h) {
+                    root.cursorRow = 0
+                    root.cursorCol = index
+                  }
+                }
+              }
+            }
           }
-          Button {
-            text: strings.t("panel.settings")
-            bordered: true
-            onClicked: root.openSettings()
+
+          Text {
+            width: parent.width
+            text: root.modeDetail
+            textFormat: Text.PlainText
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.WordWrap
           }
-          Item { Layout.fillWidth: true }
         }
 
-        Text {
-          width: parent.width
-          visible: root.historyCount > 0
-          text: strings.tn("panel.session", root.historyCount)
-                .arg(Commons.I18n.formatNumber(root.historyCount))
-          textFormat: Text.PlainText
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
-          wrapMode: Text.WordWrap
+        // ---------- Actions ----------
+        PanelSeparator {
+          foreground: root.foreground
         }
 
-        Text {
+        Column {
           width: parent.width
-          visible: root.providerName !== ""
-          text: root.providerName !== ""
-                ? strings.t("panel.provider").arg(root.providerName)
-                : ""
-          textFormat: Text.PlainText
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
-          wrapMode: Text.WordWrap
+          spacing: Style.space(8)
+
+          PanelSectionHeader {
+            text: strings.t("panel.actions")
+            foreground: root.foreground
+            fontFamily: root.fontFamily
+          }
+
+          Row {
+            width: parent.width
+            spacing: Style.space(6)
+
+            Button {
+              width: (parent.width - parent.spacing) / 2
+              text: strings.t("panel.openApp")
+              iconText: "▣"
+              fontSize: Style.font.bodySmall
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+              bordered: true
+              hasCursor: root.cursorRow === 1 && root.cursorCol === 0
+              onClicked: root.openWindow()
+              onHovered: function(h) {
+                if (h) {
+                  root.cursorRow = 1
+                  root.cursorCol = 0
+                }
+              }
+            }
+
+            Button {
+              width: (parent.width - parent.spacing) / 2
+              text: strings.t("panel.settings")
+              iconText: "⚙"
+              fontSize: Style.font.bodySmall
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+              bordered: true
+              hasCursor: root.cursorRow === 1 && root.cursorCol === 1
+              onClicked: root.openSettings()
+              onHovered: function(h) {
+                if (h) {
+                  root.cursorRow = 1
+                  root.cursorCol = 1
+                }
+              }
+            }
+          }
         }
 
-        Text {
+        // ---------- This session ----------
+        PanelSeparator {
+          foreground: root.foreground
+        }
+
+        Column {
           width: parent.width
-          text: strings.t("panel.manual")
-          textFormat: Text.PlainText
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
-          wrapMode: Text.WordWrap
+          spacing: Style.space(4)
+
+          Text {
+            width: parent.width
+            text: root.historyCount > 0
+                  ? strings.tn("panel.session", root.historyCount)
+                        .arg(Commons.I18n.formatNumber(root.historyCount))
+                  : strings.t("panel.sessionEmpty")
+            textFormat: Text.PlainText
+            color: root.historyCount > 0 ? root.foreground : root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            wrapMode: Text.WordWrap
+          }
+
+          Text {
+            width: parent.width
+            visible: root.providerName !== ""
+            text: root.providerName !== ""
+                  ? strings.t("panel.provider").arg(root.providerName)
+                  : ""
+            textFormat: Text.PlainText
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.WordWrap
+          }
+
+          Text {
+            width: parent.width
+            text: strings.t("panel.manual")
+            textFormat: Text.PlainText
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.WordWrap
+          }
         }
       }
     }

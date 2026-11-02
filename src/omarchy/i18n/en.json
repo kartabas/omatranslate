@@ -1,19 +1,25 @@
 {
   "panel.title": "Omatranslate",
-  "panel.stateOff": "Stopped",
   "panel.stateWatching": "Watching for highlights",
   "panel.statePaused": "Paused, session kept open",
+  "panel.statePausedOnly": "Paused",
   "panel.stateStarting": "Starting…",
-  "panel.watchDetail": "Start runs it hidden in the background. A highlight then shows a Translate chip; nothing is sent until you press it. Open app shows the window.",
-  "panel.session": {
-    "one": "%1 passage in this session",
-    "other": "%1 passages in this session"
-  },
-  "panel.provider": "Translations go to %1.",
-  "panel.manual": "Highlight text in your PDF reader, then press Translate. Nothing translates by itself.",
-  "panel.settings": "Settings",
-  "panel.start": "Start",
-  "panel.stop": "Stop",
+  "panel.stateOff": "Stopped",
+  "panel.mode": "Mode",
+  "panel.modeWatch": "Watching",
+  "panel.modePause": "Paused",
+  "panel.modeStop": "Stopped",
+  "panel.detailWatch": "Runs hidden in the background. A highlight shows a Translate chip; nothing is sent until you press it.",
+  "panel.detailPause": "Stops watching but keeps the session in memory. Starts the background process when it isn't running.",
+  "panel.detailStop": "Ends the background process. Open app brings it back, paused.",
+  "panel.actions": "Actions",
   "panel.openApp": "Open app",
-  "panel.statePausedOnly": "Paused"
+  "panel.settings": "Settings",
+  "panel.session": {
+    "one": "%1 passage this session",
+    "other": "%1 passages this session"
+  },
+  "panel.sessionEmpty": "Nothing translated yet.",
+  "panel.provider": "Translations go to %1.",
+  "panel.manual": "Highlight text in your PDF reader, then press Translate. Nothing translates by itself."
 }

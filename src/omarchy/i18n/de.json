@@ -1,19 +1,25 @@
 {
   "panel.title": "Omatranslate",
-  "panel.stateOff": "Beendet",
   "panel.stateWatching": "Achtet auf Markierungen",
   "panel.statePaused": "Pausiert, Sitzung bleibt offen",
+  "panel.statePausedOnly": "Pausiert",
   "panel.stateStarting": "Wird gestartet …",
-  "panel.watchDetail": "Starten lässt sie verborgen im Hintergrund laufen. Eine Markierung zeigt dann „Übersetzen“; nichts wird gesendet, bevor du es drückst. „App öffnen“ zeigt das Fenster.",
+  "panel.stateOff": "Beendet",
+  "panel.mode": "Modus",
+  "panel.modeWatch": "Aktiv",
+  "panel.modePause": "Pausiert",
+  "panel.modeStop": "Beendet",
+  "panel.detailWatch": "Läuft verborgen im Hintergrund. Eine Markierung zeigt einen Übersetzen-Knopf; nichts wird gesendet, bevor du ihn drückst.",
+  "panel.detailPause": "Hält das Beobachten an, die Sitzung bleibt im Speicher. Startet den Hintergrundprozess, wenn er nicht läuft.",
+  "panel.detailStop": "Beendet den Hintergrundprozess. „App öffnen“ holt ihn pausiert zurück.",
+  "panel.actions": "Aktionen",
+  "panel.openApp": "App öffnen",
+  "panel.settings": "Einstellungen",
   "panel.session": {
     "one": "%1 Absatz in dieser Sitzung",
     "other": "%1 Absätze in dieser Sitzung"
   },
+  "panel.sessionEmpty": "Noch nichts übersetzt.",
   "panel.provider": "Übersetzungen gehen an %1.",
-  "panel.manual": "Markiere Text in deinem PDF-Reader und drücke dann Übersetzen. Nichts wird automatisch übersetzt.",
-  "panel.settings": "Einstellungen",
-  "panel.start": "Starten",
-  "panel.stop": "Beenden",
-  "panel.openApp": "App öffnen",
-  "panel.statePausedOnly": "Pausiert"
+  "panel.manual": "Markiere Text in deinem PDF-Reader und drücke dann Übersetzen. Nichts wird automatisch übersetzt."
 }
