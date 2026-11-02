@@ -7,6 +7,7 @@ TEMPLATE = app
 INCLUDEPATH += ../src
 
 HEADERS += \
+    ../src/appcontroller.h \
     ../src/backend.h \
     ../src/deepltranslate.h \
     ../src/filepicker.h \
@@ -22,6 +23,7 @@ HEADERS += \
 
 SOURCES += \
     omatranslate_tests.cpp \
+    ../src/appcontroller.cpp \
     ../src/backend.cpp \
     ../src/deepltranslate.cpp \
     ../src/googletranslate.cpp \

@@ -6,6 +6,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include "appcontroller.h"
 #include "backend.h"
 #include "deepltranslate.h"
 #include "filepicker.h"
@@ -653,6 +654,43 @@ private slots:
         backend.setEnabled(true);
         backend.handleSelection(QStringLiteral("Erster Satz."));
         QCOMPARE(highlighted.count(), 1);
+    }
+
+    void stoppingKeepsASessionThatIsNotExported()
+    {
+        QTemporaryDir dir;
+        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+        FakePicker picker;
+        FakeTranslate translate;
+        Backend backend(&picker, &translate, nullptr, &settings, "de");
+        AppController controller(&backend, &translate, false);
+
+        backend.handleSelection(QStringLiteral("Erster Satz."));
+        backend.translateNow();
+        QTRY_COMPARE(backend.historyCount(), 1);
+
+        const QJsonObject stopped = controller.handle(QStringLiteral("stop"), {});
+        QCOMPARE(stopped.value("ok").toBool(), true);
+        QCOMPARE(stopped.value("keptOpen").toBool(), true);
+        QCOMPARE(stopped.value("stopped").toBool(), false);
+        QCOMPARE(backend.enabled(), false);
+    }
+
+    void theStatusCommandDescribesTheSession()
+    {
+        QTemporaryDir dir;
+        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+        FakePicker picker;
+        FakeTranslate translate;
+        Backend backend(&picker, &translate, nullptr, &settings, "da");
+        AppController controller(&backend, &translate, true);
+
+        const QJsonObject status = controller.handle(QStringLiteral("status"), {});
+        QCOMPARE(status.value("running").toBool(), true);
+        QCOMPARE(status.value("service").toBool(), true);
+        QCOMPARE(status.value("enabled").toBool(), true);
+        QCOMPARE(status.value("targetLanguage").toString(), QStringLiteral("da"));
+        QCOMPARE(status.value("historyCount").toInt(), 0);
     }
 
     void placementReadsHyprlandOutput()

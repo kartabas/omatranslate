@@ -42,6 +42,7 @@ signals:
     void settingsRequested();
 
 private:
+    void quitNow();
     void quitSoon();
 
     QPointer<Backend> m_backend;

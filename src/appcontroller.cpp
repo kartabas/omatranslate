@@ -59,21 +59,23 @@ void AppController::openSettings()
 
 void AppController::requestsQuit()
 {
-    // Hide before quitting: a visible Quick window on its way out can keep the
-    // process waiting for a render thread that no longer has a screen.
-    if (m_window)
-        m_window->hide();
-    QCoreApplication::quit();
+    quitNow();
 }
 
 void AppController::quitSoon()
 {
     // Answer on the socket before the process disappears.
-    QTimer::singleShot(0, this, [this] {
-        if (m_window)
-            m_window->hide();
-        QCoreApplication::quit();
-    });
+    QTimer::singleShot(0, this, [this] { quitNow(); });
+}
+
+void AppController::quitNow()
+{
+    // Hide first: a visible Quick window keeps the process waiting on a render
+    // thread that no longer has a screen. exit() rather than quit(), because
+    // quit() is swallowed once the window has been shown.
+    if (m_window)
+        m_window->hide();
+    QCoreApplication::exit(0);
 }
 
 QJsonObject AppController::handle(const QString &command, const QJsonObject &arguments)

@@ -87,7 +87,7 @@
   "Turn on": "Einschalten",
   "Translation service": "Übersetzungsdienst",
   "DeepL API key": "DeepL-API-Schlüssel",
-  "Paste your key, free keys end in :fx": "Füge deinen Schlüssel ein; kostenlose Schlüssel enden auf :fx",
+  "Paste your key, free keys end in :fx": "Schlüssel einfügen; kostenlose enden auf :fx",
   "Without a key, translations fail before they are sent.": "Ohne Schlüssel schlagen Übersetzungen fehl, bevor sie gesendet werden.",
   "Server address": "Serveradresse",
   "API key (optional)": "API-Schlüssel (optional)",
