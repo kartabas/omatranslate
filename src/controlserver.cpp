@@ -92,12 +92,25 @@ void ControlServer::setHandler(Handler handler)
 bool ControlServer::listen()
 {
     close();
-    // A socket left behind by a crash keeps the name reserved. Only remove it
-    // once nobody answers on it.
-    if (!isRunning(250))
-        QLocalServer::removeServer(socketName());
+    // A live app already answers on this name. Qt would take the socket over
+    // and leave that copy unreachable, so never even try.
+    if (isRunning(500))
+        return false;
+    // A socket left behind by a crash keeps the name reserved; nobody answers
+    // on it, so removing it is safe.
+    QLocalServer::removeServer(socketName());
     m_server.setSocketOptions(QLocalServer::UserAccessOption);
-    return m_server.listen(socketName());
+    if (!m_server.listen(socketName()))
+        return false;
+    // Two copies can still race here. Only the one whose status names this
+    // process keeps the socket; the other leaves it alone.
+    bool connected = false;
+    const QJsonObject reply = send(QStringLiteral("status"), {}, 500, &connected);
+    if (connected && reply.value(QStringLiteral("pid")).toInt() != QCoreApplication::applicationPid()) {
+        m_server.close();
+        return false;
+    }
+    return true;
 }
 
 void ControlServer::close()

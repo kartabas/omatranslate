@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QProcessEnvironment>
 #include <QSaveFile>
 #include <QSettings>
 #include <QStandardPaths>
@@ -188,8 +189,17 @@ int enable(const QStringList &arguments) {
     QJsonObject reply = ControlServer::send(QStringLiteral("enable"), {}, 600, &connected);
     bool started = false;
     if (!connected) {
-        started = QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                                          {QStringLiteral("service"), QStringLiteral("--enable")});
+        // The command itself runs without a display, so its own environment
+        // says offscreen. The service must not inherit that: it is the process
+        // that shows the window.
+        QProcess process;
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.remove(QStringLiteral("QT_QPA_PLATFORM"));
+        environment.remove(QStringLiteral("QT_QPA_PLATFORMTHEME"));
+        process.setProcessEnvironment(environment);
+        process.setProgram(QCoreApplication::applicationFilePath());
+        process.setArguments({QStringLiteral("service"), QStringLiteral("--enable")});
+        started = process.startDetached();
         if (!started)
             return fail("Couldn't start the Omatranslate service.");
         // Give the new process a moment to open its socket.

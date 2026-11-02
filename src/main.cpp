@@ -113,8 +113,13 @@ int main(int argc, char *argv[]) {
     server.setHandler([&controller](const QString &name, const QJsonObject &arguments) {
         return controller.handle(name, arguments);
     });
-    if (!server.listen())
+    if (!server.listen()) {
+        // Only one copy can own the socket. A second service would watch the
+        // selection alongside the first and never be reachable, so it leaves.
+        if (serviceMode)
+            return 0;
         qWarning("omatranslate: couldn't open the control socket; commands from the bar won't arrive.");
+    }
 
     QQmlApplicationEngine engine;
     // Say why the window didn't open instead of leaving an exit code behind.
