@@ -7,15 +7,14 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 
-// The Omatranslate widget in the Omarchy bar. It owns the background switch:
-// on starts the hidden service, off stops it (or keeps it open only when the
-// session still has translations waiting to be exported). Everything else it
+// The Omatranslate widget in the Omarchy bar. Start runs the service hidden,
+// Stop ends it (or keeps it open only when the session still has translations
+// waiting to be exported), and Open app shows its window. Everything else it
 // asks the running app to do over the app's own control socket.
 Panel {
   id: root
   moduleName: "kartabas.omatranslate"
   ipcTarget: "kartabas.omatranslate"
-  manageIpc: false
 
   readonly property var shellApi: root.shell || (root.bar ? root.bar.shell : null)
   readonly property color foreground: barForeground
@@ -102,15 +101,6 @@ Panel {
   Component.onCompleted: {
     if (root.enabled) run(["enable"])
     refresh()
-  }
-
-  IpcHandler {
-    target: root.ipcTarget
-    function open(): void { root.open() }
-    function close(): void { root.close() }
-    function toggle(): void { root.toggle() }
-    function refresh(): string { root.refresh(); return "ok" }
-    function status(): string { return root.tooltip }
   }
 
   BarIconButton {
