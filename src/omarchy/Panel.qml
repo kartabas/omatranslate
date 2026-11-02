@@ -37,10 +37,11 @@ Panel {
   readonly property string endpoint: status ? String(status.endpoint || "") : ""
   readonly property bool serviceRunning: running && status.service === true
 
-  readonly property string stateText: !root.enabled ? strings.t("panel.stateOff")
-    : root.watching ? strings.t("panel.stateWatching")
-    : root.running ? strings.t("panel.statePaused")
-    : strings.t("panel.stateStarting")
+  readonly property string stateText: root.running
+    ? (root.watching ? strings.t("panel.stateWatching")
+       : root.historyCount > 0 ? strings.t("panel.statePaused")
+       : strings.t("panel.statePausedOnly"))
+    : (root.acting ? strings.t("panel.stateStarting") : strings.t("panel.stateOff"))
 
   readonly property string tooltip: "Omatranslate — " + root.stateText
 
@@ -67,12 +68,12 @@ Panel {
       statusProcess.running = true
   }
 
+  // Start runs the service hidden; the window is opened on demand. Stop ends
+  // it, unless the session still has translations that were not exported — in
+  // that case it keeps itself open and the state line says so.
   function setEnabled(value) {
-    if (root.enabled === value) return
     root.acting = true
-    save("enabled", !!value)
-    // Off asks the service to quit, but it keeps itself alive when the session
-    // still has translations that have not been exported.
+    if (root.enabled !== !!value) save("enabled", !!value)
     run([value ? "enable" : "stop"])
     settleTimer.restart()
   }
@@ -189,44 +190,38 @@ Panel {
           color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.10)
         }
 
-        Item {
+        Text {
           width: parent.width
-          implicitHeight: Math.max(toggleLabels.implicitHeight, toggle.implicitHeight)
+          text: strings.t("panel.watchDetail")
+          textFormat: Text.PlainText
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+          wrapMode: Text.WordWrap
+        }
 
-          Column {
-            id: toggleLabels
-            anchors.left: parent.left
-            anchors.right: toggle.left
-            anchors.rightMargin: Style.space(12)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Style.space(2)
+        RowLayout {
+          width: parent.width
+          spacing: Style.space(8)
 
-            Text {
-              width: parent.width
-              text: strings.t("panel.watch")
-              color: root.foreground
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.body
-            }
-            Text {
-              width: parent.width
-              text: strings.t("panel.watchDetail")
-              color: root.dim
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
-              wrapMode: Text.WordWrap
-            }
+          Button {
+            // The process, not the window: start runs it hidden, stop ends it
+            // (or leaves the session open when translations are waiting).
+            text: root.running ? strings.t("panel.stop") : strings.t("panel.start")
+            active: true
+            onClicked: root.setEnabled(!root.running)
           }
-
-          ToggleSwitch {
-            id: toggle
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            checked: root.enabled
-            busy: root.acting
-            foreground: root.foreground
-            onToggled: root.setEnabled(checked)
+          Button {
+            text: strings.t("panel.openApp")
+            bordered: true
+            onClicked: root.openWindow()
           }
+          Button {
+            text: strings.t("panel.settings")
+            bordered: true
+            onClicked: root.openSettings()
+          }
+          Item { Layout.fillWidth: true }
         }
 
         Text {
@@ -257,27 +252,11 @@ Panel {
         Text {
           width: parent.width
           text: strings.t("panel.manual")
+          textFormat: Text.PlainText
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
           wrapMode: Text.WordWrap
-        }
-
-        RowLayout {
-          width: parent.width
-          spacing: Style.space(8)
-
-          Button {
-            text: strings.t("panel.open")
-            bordered: true
-            onClicked: root.openWindow()
-          }
-          Button {
-            text: strings.t("panel.settings")
-            bordered: true
-            onClicked: root.openSettings()
-          }
-          Item { Layout.fillWidth: true }
         }
       }
     }

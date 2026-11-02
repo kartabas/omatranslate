@@ -1,17 +1,19 @@
 {
   "panel.title": "Omatranslate",
-  "panel.stateOff": "Fra",
+  "panel.stateOff": "Stoppet",
   "panel.stateWatching": "Holder øje med markeringer",
   "panel.statePaused": "Sat på pause, sessionen er åben",
   "panel.stateStarting": "Starter …",
-  "panel.watch": "Hold øje med markeringer",
-  "panel.watchDetail": "Kører i baggrunden. En markering viser »Oversæt«; intet sendes, før du trykker.",
+  "panel.watchDetail": "Start kører den skjult i baggrunden. En markering viser så en Oversæt-knap; intet sendes, før du trykker på den. Åbn app viser vinduet.",
   "panel.session": {
     "one": "%1 afsnit i denne session",
     "other": "%1 afsnit i denne session"
   },
   "panel.provider": "Oversættelser sendes til %1.",
   "panel.manual": "Markér tekst i din PDF-læser, og tryk derefter Oversæt. Intet oversættes automatisk.",
-  "panel.open": "Åbn",
-  "panel.settings": "Indstillinger"
+  "panel.settings": "Indstillinger",
+  "panel.start": "Start",
+  "panel.stop": "Stop",
+  "panel.openApp": "Åbn app",
+  "panel.statePausedOnly": "Sat på pause"
 }

@@ -9,12 +9,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QProcess>
-#include <QProcessEnvironment>
 #include <QSaveFile>
 #include <QSettings>
 #include <QStandardPaths>
-#include <QThread>
 #include <QTimer>
 #include <cstdio>
 
@@ -192,21 +189,12 @@ int enable(const QStringList &arguments) {
         // The command itself runs without a display, so its own environment
         // says offscreen. The service must not inherit that: it is the process
         // that shows the window.
-        QProcess process;
-        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-        environment.remove(QStringLiteral("QT_QPA_PLATFORM"));
-        environment.remove(QStringLiteral("QT_QPA_PLATFORMTHEME"));
-        process.setProcessEnvironment(environment);
-        process.setProgram(QCoreApplication::applicationFilePath());
-        process.setArguments({QStringLiteral("service"), QStringLiteral("--enable")});
-        started = process.startDetached();
+        started = ControlServer::startService(true);
         if (!started)
             return fail("Couldn't start the Omatranslate service.");
-        // Give the new process a moment to open its socket.
-        for (int i = 0; i < 20 && !connected; ++i) {
-            QThread::msleep(100);
-            reply = ControlServer::send(QStringLiteral("status"), {}, 300, &connected);
-        }
+        connected = ControlServer::waitForService();
+        if (connected)
+            reply = ControlServer::send(QStringLiteral("status"), {}, 600, &connected);
     }
 
     QJsonObject result{{"ok", true}, {"enabled", true}, {"started", started}, {"running", connected}};
@@ -494,6 +482,8 @@ QString cliSummary() {
     return "App:\n"
            "  open [pdf]                    Open Omatranslate, opening a PDF in your reader if one is named\n"
            "  settings                      Open Omatranslate straight to Settings\n"
+           "  show                          Show the window of a running Omatranslate\n"
+           "  hide                          Put the window away, keeping Omatranslate running\n"
            "  service [--enable]            Run hidden in the background (the bar plugin starts this)\n\n"
            "Commands that need no display (omatranslate help <command> for options):\n"
            "  translate [options] <text>    Translate a passage, or - to read standard input\n"

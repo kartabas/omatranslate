@@ -4,6 +4,9 @@
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QLocalSocket>
+#include <QProcess>
+#include <QProcessEnvironment>
+#include <QThread>
 #include <QTimer>
 #include <utility>
 
@@ -87,6 +90,29 @@ QJsonObject ControlServer::send(const QString &command, const QJsonObject &argum
 void ControlServer::setHandler(Handler handler)
 {
     m_handler = std::move(handler);
+}
+
+bool ControlServer::startService(bool watch)
+{
+    QProcess process;
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    environment.remove(QStringLiteral("QT_QPA_PLATFORM"));
+    environment.remove(QStringLiteral("QT_QPA_PLATFORMTHEME"));
+    process.setProcessEnvironment(environment);
+    process.setProgram(QCoreApplication::applicationFilePath());
+    process.setArguments(watch ? QStringList{QStringLiteral("service"), QStringLiteral("--enable")}
+                               : QStringList{QStringLiteral("service")});
+    return process.startDetached();
+}
+
+bool ControlServer::waitForService(int timeout)
+{
+    for (int waited = 0; waited < timeout; waited += 100) {
+        if (isRunning(300))
+            return true;
+        QThread::msleep(100);
+    }
+    return isRunning(300);
 }
 
 bool ControlServer::listen()

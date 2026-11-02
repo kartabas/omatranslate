@@ -30,6 +30,14 @@ public:
     static QJsonObject send(const QString &command, const QJsonObject &arguments = {},
                             int timeout = 3000, bool *connected = nullptr);
 
+    // Starts the hidden service as its own process. It must not inherit the
+    // caller's environment: a command runs offscreen and would take the
+    // window down with it. Returns false when the process couldn't start.
+    static bool startService(bool watch);
+
+    // Waits for a freshly started service to answer on the socket.
+    static bool waitForService(int timeout = 4000);
+
     void setHandler(Handler handler);
     bool listen();
     void close();

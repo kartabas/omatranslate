@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     const bool startupSettings = mode == QLatin1String("settings");
     const bool startupShow = mode == QLatin1String("show");
     const bool startupTranslate = mode == QLatin1String("translate");
-    if (serviceMode || startupSettings || startupShow || startupTranslate
+    const bool startupHide = mode == QLatin1String("hide");
+    if (serviceMode || startupSettings || startupShow || startupTranslate || startupHide
         || mode == QLatin1String("open"))
         args.removeAt(1);
 
@@ -76,6 +77,8 @@ int main(int argc, char *argv[]) {
             commandName = QStringLiteral("show");
         } else if (startupTranslate) {
             commandName = QStringLiteral("translate");
+        } else if (startupHide) {
+            commandName = QStringLiteral("hide");
         } else {
             commandName = QStringLiteral("open");
             if (args.size() > 1)
@@ -83,7 +86,13 @@ int main(int argc, char *argv[]) {
         }
 
         bool connected = false;
-        const QJsonObject reply = ControlServer::send(commandName, payload, 1500, &connected);
+        QJsonObject reply = ControlServer::send(commandName, payload, 1500, &connected);
+        if (!connected && ControlServer::startService(false) && ControlServer::waitForService()) {
+            // The window is a view onto the one background process, so closing
+            // it leaves watching and the session alive. Starting a second GUI
+            // process here would watch the selection twice.
+            reply = ControlServer::send(commandName, payload, 3000, &connected);
+        }
         if (connected)
             return reply.value(QStringLiteral("ok")).toBool() ? 0 : 1;
     }

@@ -63,21 +63,29 @@ translations asks first.
 
 ## The bar widget
 
-The bar widget is the on/off switch for the background service. It shows
-whether Omatranslate is watching, paused, or off, and its menu opens the
-session window or Settings.
+The widget runs Omatranslate in the background and opens its window only when
+you ask. It shows whether the service is watching, paused, or stopped.
 
-- **Watch for highlights** on starts the hidden service. Highlights then show
-  the Translate chip.
-- Switching it off runs `omatranslate stop`: watching stops and the process
-  quits, unless the session still has translations you haven't exported. In
-  that case the window stays open so you can export first, and the app says
-  so.
+- **Start** runs `omatranslate enable`: the service starts hidden, and a
+  highlight in your reader then shows the Translate chip. No window opens.
+- **Open app** shows the window on top of what you are reading. Closing the
+  window puts it back in the background; watching and the session carry on.
+- **Stop** runs `omatranslate stop`: watching stops and the process quits,
+  unless the session still has translations you haven't exported. In that
+  case the window stays open so you can export first, and the widget says so.
+- **Settings** opens the window straight to the translation service and
+  language choices.
+
+Starting the app any other way — the launcher, `omatranslate open`, the "Open
+with" menu — starts that same background service and shows its window, so
+there is only ever one process watching your selection.
 
 The same switches work from a terminal:
 
 ```sh
 omatranslate enable     # start watching in the background
+omatranslate open       # show the window (starting the service if needed)
+omatranslate hide       # put the window away, keep watching
 omatranslate disable    # pause, keeping the session open
 omatranslate stop       # pause and quit, unless a session needs exporting
 omatranslate quit       # quit, service included
