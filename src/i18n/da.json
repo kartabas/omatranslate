@@ -113,5 +113,6 @@
   "Couldn't reach LibreTranslate: %1": "Kunne ikke nå LibreTranslate: %1",
   "LibreTranslate sent an answer this app couldn't read.": "LibreTranslate sendte et svar, som denne app ikke kunne læse.",
   "LibreTranslate answered: %1": "LibreTranslate svarede: %1",
-  "LibreTranslate sent an empty translation.": "LibreTranslate sendte en tom oversættelse."
+  "LibreTranslate sent an empty translation.": "LibreTranslate sendte en tom oversættelse.",
+  "Hide the window": "Skjul vinduet"
 }

@@ -627,7 +627,7 @@ ApplicationWindow {
                             { key: "Ctrl+E", what: qsTr("Export the session as Markdown") },
                             { key: "Ctrl+Z", what: qsTr("Undo removing translations") },
                             { key: "Ctrl+,", what: qsTr("Choose the languages") },
-                            { key: "Q", what: qsTr("Quit") },
+                            { key: "Q", what: qsTr("Hide the window") },
                             { key: "Esc", what: qsTr("Close this list") }
                         ]
                         delegate: Row {

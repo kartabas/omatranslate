@@ -113,5 +113,6 @@
   "Couldn't reach LibreTranslate: %1": "LibreTranslate war nicht erreichbar: %1",
   "LibreTranslate sent an answer this app couldn't read.": "LibreTranslate hat eine Antwort gesendet, die diese App nicht lesen konnte.",
   "LibreTranslate answered: %1": "LibreTranslate antwortete: %1",
-  "LibreTranslate sent an empty translation.": "LibreTranslate hat eine leere Übersetzung gesendet."
+  "LibreTranslate sent an empty translation.": "LibreTranslate hat eine leere Übersetzung gesendet.",
+  "Hide the window": "Fenster ausblenden"
 }
