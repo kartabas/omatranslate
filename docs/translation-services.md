@@ -26,9 +26,8 @@ anti-bot page, so Omatranslate uses `clients5.google.com`, the host Google's
 own browser extension calls. It needs no account or key.
 
 This is an unofficial endpoint. It can occasionally answer with an empty
-translation; the request is retried once, and a persistent failure is reported
-in the window. If that becomes a problem, DeepL or a self-hosted
-LibreTranslate is the dependable choice.
+translation; the window and the card then offer **Retry**. If that becomes a
+problem, DeepL or a self-hosted LibreTranslate is the dependable choice.
 
 ### DeepL
 

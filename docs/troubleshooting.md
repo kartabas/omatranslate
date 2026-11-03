@@ -95,9 +95,9 @@ Export with `Ctrl+E`, then stop again, or `omatranslate quit` to discard them.
 ## Google Translate fails or returns nothing
 
 The `clients5.google.com` endpoint is unofficial. It can answer with an empty
-result under load; Omatranslate retries once. If it keeps failing, switch to
-DeepL or a LibreTranslate server in Settings. A network error names the
-service in the window, so a failure is never silent.
+result under load; press **Retry** in the window or the card. If it keeps
+failing, switch to DeepL or a LibreTranslate server in Settings. A network
+error names the service in the window, so a failure is never silent.
 
 ## DeepL says the key is missing or rejected
 

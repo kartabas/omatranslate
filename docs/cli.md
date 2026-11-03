@@ -32,7 +32,7 @@ the saved `enabled` setting.
 ## Translating
 
 ```sh
-omatranslate translate [--from <code>] --to <code> [--json] <text|-> 
+omatranslate translate [--from <code>] --to <code> [--json] <text|->
 ```
 
 | Option | Meaning |
@@ -155,8 +155,9 @@ Without `--json` it prints one human sentence. With it:
 | `document` | the open PDF, if any |
 | `provider`, `providerName`, `endpoint` | where translations go |
 
-`status` works without a running app: it then reads the saved settings and
-reports `running: false`. This is what the bar widget polls.
+`status` works without a running app: it then reports `running: false` and
+`service: false`, with `enabled`, `historyCount`, and `version` read from the
+saved settings. This is what the bar widget polls.
 
 ## The bar widget
 
