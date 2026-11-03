@@ -59,9 +59,11 @@ Both leave every other bar widget where it was.
 
 1. Open a PDF from your reader as usual, from the **Open with** menu, or with
    `omatranslate open paper.pdf`.
-2. Highlight a passage. A **Translate** chip appears where the selection ended.
-3. Click the chip. The translation opens in a card beside the passage, with
-   **Copy** and **Close**. Your reader keeps the keyboard the whole time.
+2. Highlight a passage. A **Translate** chip appears where the selection ended
+   and stays for a second; click it while it is there, or press `Enter` in the
+   Omatranslate window.
+3. The translation opens in a card beside the passage, with **Copy** and
+   **Close**. Your reader keeps the keyboard the whole time.
 4. Press `Ctrl+E` (or **Export**) to write `paper.omatranslate.md` beside the
    PDF. The original file is untouched.
 

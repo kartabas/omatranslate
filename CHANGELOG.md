@@ -29,6 +29,8 @@ the package version in `pkgbuild/PKGBUILD`.
   `stop` quits, unless the session has unexported translations.
 - The floating card follows the Omarchy theme and is placed from Hyprland's
   monitor, pointer, and active-window information.
+- The **Translate** chip now fades after a second instead of lingering over the
+  page; highlighting again brings it back.
 
 ### Fixed
 

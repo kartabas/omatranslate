@@ -43,6 +43,11 @@ bool isOwnWindow(const QString &windowClass)
     return windowClass.contains(QLatin1String("omatranslate"), Qt::CaseInsensitive);
 }
 
+// The chip is an invitation, not a toolbar: it shows for a moment and then
+// gets out of the way. Highlighting again brings it back, and Enter in the
+// window translates the current selection without it.
+constexpr int ChipLifetimeMs = 1000;
+
 }
 
 Overlay::Overlay(Backend *backend, QObject *parent) : QObject(parent), m_backend(backend)
@@ -51,7 +56,7 @@ Overlay::Overlay(Backend *backend, QObject *parent) : QObject(parent), m_backend
 
     // A chip that nobody clicks should not sit on the page forever.
     m_chipTimer.setSingleShot(true);
-    m_chipTimer.setInterval(8000);
+    m_chipTimer.setInterval(ChipLifetimeMs);
     connect(&m_chipTimer, &QTimer::timeout, this, [this] {
         if (m_mode == QLatin1String("chip"))
             dismiss();
