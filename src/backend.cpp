@@ -427,8 +427,6 @@ void Backend::setSourceLanguage(const QString &code) {
     m_source = code;
     saveSelection();
     emit changed();
-    if (!m_selection.isEmpty())
-        startTranslation();
 }
 
 void Backend::setTargetLanguage(const QString &code) {
@@ -437,8 +435,6 @@ void Backend::setTargetLanguage(const QString &code) {
     m_target = code;
     saveSelection();
     emit changed();
-    if (!m_selection.isEmpty())
-        startTranslation();
 }
 
 void Backend::setEnabled(bool enabled) {
@@ -467,8 +463,6 @@ void Backend::swapLanguages() {
     m_target = source;
     saveSelection();
     emit changed();
-    if (!m_selection.isEmpty())
-        startTranslation();
 }
 
 void Backend::saveSelection() {

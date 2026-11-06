@@ -330,20 +330,37 @@ private slots:
         QCOMPARE(translate.calls.size(), 2);
     }
 
-    void changingTheTargetKeepsBoth()
+    void changingLanguagesAndSwappingWaitForTranslate()
     {
         QTemporaryDir dir;
         QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
         FakePicker picker;
         FakeTranslate translate;
-        Backend backend(&picker, &translate, nullptr, &settings, "de");
+        Backend backend(&picker, &translate, nullptr, &settings, "en");
 
+        QVERIFY(backend.enabled());
         backend.handleSelection(QStringLiteral("Erster Satz."));
-        backend.translateNow();
-        QTRY_COMPARE(backend.historyCount(), 1);
+        backend.setSourceLanguage(QStringLiteral("de"));
         backend.setTargetLanguage(QStringLiteral("da"));
+        QCOMPARE(translate.calls.size(), 0);
+        QCOMPARE(backend.historyCount(), 0);
+        QCOMPARE(backend.status(), QStringLiteral("idle"));
+
+        backend.translateNow();
+        QCOMPARE(backend.historyCount(), 1);
+        QCOMPARE(translate.calls.size(), 1);
+        QCOMPARE(translate.calls.first().from, QStringLiteral("de"));
+        QCOMPARE(translate.calls.first().to, QStringLiteral("da"));
+
+        backend.swapLanguages();
+        QCOMPARE(translate.calls.size(), 1);
+        QCOMPARE(backend.historyCount(), 1);
+
+        backend.translateNow();
         QCOMPARE(backend.historyCount(), 2);
-        QCOMPARE(backend.history().first().toMap().value("to").toString(), QStringLiteral("da"));
+        QCOMPARE(translate.calls.size(), 2);
+        QCOMPARE(translate.calls.last().from, QStringLiteral("da"));
+        QCOMPARE(translate.calls.last().to, QStringLiteral("de"));
     }
 
     void removingAndClearingCanBeUndone()
