@@ -55,6 +55,20 @@ omatranslate plugin remove   # take it out again
 
 Both leave every other bar widget where it was.
 
+## Update
+
+```
+omarchy plugin update kartabas.omatranslate
+```
+
+## Uninstall
+
+```
+omarchy plugin remove kartabas.omatranslate
+```
+
+
+
 ## Read a PDF
 
 1. Open a PDF from your reader as usual, from the **Open with** menu, or with
