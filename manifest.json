@@ -15,7 +15,7 @@
     "description": "Highlight-to-translate in the background, with quick access to the session window and Settings.",
     "category": "Productivity",
     "allowMultiple": false,
-    "defaultSection": "centerEnd",
+    "defaultSection": "center",
     "defaults": {
       "enabled": true
     },
