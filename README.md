@@ -74,8 +74,8 @@ omarchy plugin remove kartabas.omatranslate
 1. Open a PDF from your reader as usual, from the **Open with** menu, or with
    `omatranslate open paper.pdf`.
 2. Highlight a passage. A **Translate** chip appears where the selection ended
-   and stays for a second; click it while it is there, or press `Enter` in the
-   Omatranslate window.
+   and stays until the selection is cleared or watching is disabled; click it
+   whenever you are ready, or press `Enter` in the Omatranslate window.
 3. The translation opens in a card beside the passage, with **Copy** and
    **Close**. Your reader keeps the keyboard the whole time.
 4. Press `Ctrl+E` (or **Export**) to write `paper.omatranslate.md` beside the
