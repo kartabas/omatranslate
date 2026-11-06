@@ -6,7 +6,6 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
-#include <QTimer>
 
 class Backend;
 class QQmlEngine;
@@ -65,7 +64,6 @@ private:
     LayerShellQt::Window *m_layer = nullptr;
     QString m_mode = QStringLiteral("hidden");
     Placement m_placement;
-    QTimer m_chipTimer;
     QString m_lastSelection;
     QString m_hyprctl;
 };

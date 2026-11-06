@@ -34,10 +34,10 @@ chip is deliberately the only automatic part: highlighting a passage in your
 reader does not translate it, and nothing is sent until you press the chip or
 `Enter` in the Omatranslate window.
 
-The chip is an invitation, not a toolbar. It disappears after a second so it
-does not keep covering the page; highlighting the passage again brings it
-back, and `Enter` in the Omatranslate window translates the current selection
-without it.
+The chip stays visible while the selection remains active, including when you
+move the pointer over it. It disappears when the selection is cleared or
+watching is disabled. `Enter` in the Omatranslate window also translates the
+current selection.
 
 The chip needs `wl-clipboard`. If it is missing, the app says so instead of
 silently watching nothing.
