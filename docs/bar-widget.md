@@ -60,8 +60,10 @@ exported; the widget then says *Paused, session kept open*.
 
 **Open app** runs `omatranslate open`. If no service is running it starts one
 first, then shows the window; the window is always a view onto the background
-process, never a second copy. Closing the window hides it and leaves watching
-and the session running.
+process, never a second copy. It opens centered on the screen and above the
+other windows (floating and pinned under Hyprland), so it is not lost behind the
+PDF you were reading. Closing the window hides it, drops the on-top state, and
+leaves watching and the session running.
 
 **Settings** runs `omatranslate settings`, which shows the same window with the
 settings sheet already open.

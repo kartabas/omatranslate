@@ -97,7 +97,7 @@ modes and two actions:
 | **Watching** | Starts the hidden service. A highlight shows the Translate chip. |
 | **Paused** | Stops watching and hides the chip, but keeps the session in memory. |
 | **Stopped** | Ends the process, unless the session still has unexported translations. |
-| **Open app** | Shows the window. Closing it hides the window and keeps watching. |
+| **Open app** | Shows the window centered and above other windows. Closing it hides the window and keeps watching. |
 | **Settings** | Opens straight to the translation service and language choices. |
 
 The same switches work from a terminal:

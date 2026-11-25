@@ -6,6 +6,7 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 
 // One monitor as the compositor lays it out, in logical pixels.
 struct ScreenInfo {
@@ -28,3 +29,13 @@ QPoint chooseAnchor(const QPoint &cursor, const QList<ScreenInfo> &screens,
 // bottom, and never lands under the bar at the top.
 QPoint popoverPosition(const QPoint &anchor, const QSize &popover, const QSize &screen,
                        int margin = 12);
+
+// Where the main window sits when it is opened from the bar, inside the usable
+// part of a screen (the bar is already excluded from `screen`).
+QRect centeredWindowGeometry(const QRect &screen, const QSize &window);
+
+// A hyprctl --batch script for the main window. The process id selects it on
+// Wayland, where a Qt window has no native X11 id to address. `onTop` also
+// pins it above other windows and raises it in the stack.
+QStringList mainWindowPlacementCommands(int pid, bool onTop);
+QStringList mainWindowUnpinCommands(int pid);

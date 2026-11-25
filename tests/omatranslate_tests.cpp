@@ -1,6 +1,9 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QGuiApplication>
+#include <QQuickWindow>
+#include <QScreen>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -774,6 +777,54 @@ private slots:
         QCOMPARE(popoverPosition(QPoint(100, 2), card, screen), QPoint(116, 40));
         // A card wider than the screen is pinned to the margin.
         QCOMPARE(popoverPosition(QPoint(0, 0), QSize(2000, 200), screen), QPoint(12, 40));
+    }
+
+    void openCommandCentersTheWindowAndPutsItOnTop()
+    {
+        QTemporaryDir dir;
+        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+        FakePicker picker;
+        FakeTranslate translate;
+        Backend backend(&picker, &translate, nullptr, &settings, "de");
+        AppController controller(&backend, &translate, true);
+
+        QQuickWindow window;
+        window.setGeometry(0, 0, 400, 300);
+        controller.setWindow(&window);
+
+        const QJsonObject opened = controller.handle(QStringLiteral("open"), {});
+        QVERIFY(opened.value(QStringLiteral("ok")).toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(window.flags() & Qt::WindowStaysOnTopHint, 2000);
+
+        QScreen *screen = window.screen() ? window.screen() : QGuiApplication::primaryScreen();
+        QVERIFY(screen != nullptr);
+        QCOMPARE(window.geometry(),
+                 centeredWindowGeometry(screen->availableGeometry(), QSize(400, 300)));
+
+        // Hiding the window gives the on-top state back.
+        controller.hideMain();
+        QVERIFY(!(window.flags() & Qt::WindowStaysOnTopHint));
+    }
+
+    void openCommandBuildsHyprlandPlacement()
+    {
+        const QStringList onTop = mainWindowPlacementCommands(4242, true);
+        QCOMPARE(onTop.size(), 4);
+        QVERIFY(onTop.at(0).contains(QStringLiteral("float")));
+        QVERIFY(onTop.at(1).contains(QStringLiteral("center")));
+        QVERIFY(onTop.at(2).contains(QStringLiteral("pin({action='on'")));
+        QVERIFY(onTop.at(3).contains(QStringLiteral("alter_zorder({mode='top'")));
+        for (const QString &command : onTop)
+            QVERIFY(command.contains(QStringLiteral("pid:4242")));
+
+        QCOMPARE(mainWindowPlacementCommands(4242, false).size(), 2);
+        const QStringList unpin = mainWindowUnpinCommands(4242);
+        QCOMPARE(unpin.size(), 1);
+        QVERIFY(unpin.first().contains(QStringLiteral("pin({action='off'")));
+        QVERIFY(unpin.first().contains(QStringLiteral("pid:4242")));
+
+        QCOMPARE(centeredWindowGeometry(QRect(0, 30, 1600, 870), QSize(640, 800)),
+                 QRect(480, 65, 640, 800));
     }
 
 private:
