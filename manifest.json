@@ -5,7 +5,7 @@
   "version": "0.2.1",
   "author": "kartabas",
   "license": "MIT",
-  "description": "Switch Omatranslate's background watching on or off, and open its window or Settings, from the Omarchy bar.",
+  "description": "Translate the passage you highlight in a PDF, right where you are reading — then keep the session as Markdown.",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "Panel.qml"
