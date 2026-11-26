@@ -65,8 +65,8 @@ other windows (floating and pinned under Hyprland), so it is not lost behind the
 PDF you were reading. Closing the window hides it, drops the on-top state, and
 leaves watching and the session running.
 
-**Settings** runs `omatranslate settings`, which shows the same window with the
-settings sheet already open.
+**Settings** runs `omatranslate settings`. It opens the same centered, on-top
+window as **Open app**, with the settings sheet already open.
 
 Both buttons close the widget popup so the window is not hidden behind it.
 

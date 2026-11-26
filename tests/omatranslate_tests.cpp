@@ -779,31 +779,37 @@ private slots:
         QCOMPARE(popoverPosition(QPoint(0, 0), QSize(2000, 200), screen), QPoint(12, 40));
     }
 
-    void openCommandCentersTheWindowAndPutsItOnTop()
+    void openAndSettingsCommandsCenterTheWindowAndPutItOnTop()
     {
-        QTemporaryDir dir;
-        QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
-        FakePicker picker;
-        FakeTranslate translate;
-        Backend backend(&picker, &translate, nullptr, &settings, "de");
-        AppController controller(&backend, &translate, true);
+        // Both bar actions are front doors to the same window.
+        for (const QString &command : {QStringLiteral("open"), QStringLiteral("settings")}) {
+            QTemporaryDir dir;
+            QSettings settings(dir.filePath("settings.conf"), QSettings::IniFormat);
+            FakePicker picker;
+            FakeTranslate translate;
+            Backend backend(&picker, &translate, nullptr, &settings, "de");
+            AppController controller(&backend, &translate, true);
+            QSignalSpy requested(&controller, &AppController::settingsRequested);
 
-        QQuickWindow window;
-        window.setGeometry(0, 0, 400, 300);
-        controller.setWindow(&window);
+            QQuickWindow window;
+            window.setGeometry(0, 0, 400, 300);
+            controller.setWindow(&window);
 
-        const QJsonObject opened = controller.handle(QStringLiteral("open"), {});
-        QVERIFY(opened.value(QStringLiteral("ok")).toBool());
-        QTRY_VERIFY_WITH_TIMEOUT(window.flags() & Qt::WindowStaysOnTopHint, 2000);
+            const QJsonObject reply = controller.handle(command, {});
+            QVERIFY(reply.value(QStringLiteral("ok")).toBool());
+            QTRY_VERIFY_WITH_TIMEOUT(window.flags() & Qt::WindowStaysOnTopHint, 2000);
+            if (command == QLatin1String("settings"))
+                QCOMPARE(requested.count(), 1);
 
-        QScreen *screen = window.screen() ? window.screen() : QGuiApplication::primaryScreen();
-        QVERIFY(screen != nullptr);
-        QCOMPARE(window.geometry(),
-                 centeredWindowGeometry(screen->availableGeometry(), QSize(400, 300)));
+            QScreen *screen = window.screen() ? window.screen() : QGuiApplication::primaryScreen();
+            QVERIFY(screen != nullptr);
+            QCOMPARE(window.geometry(),
+                     centeredWindowGeometry(screen->availableGeometry(), QSize(400, 300)));
 
-        // Hiding the window gives the on-top state back.
-        controller.hideMain();
-        QVERIFY(!(window.flags() & Qt::WindowStaysOnTopHint));
+            // Hiding the window gives the on-top state back.
+            controller.hideMain();
+            QVERIFY(!(window.flags() & Qt::WindowStaysOnTopHint));
+        }
     }
 
     void openCommandBuildsHyprlandPlacement()

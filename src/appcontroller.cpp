@@ -125,7 +125,9 @@ void AppController::hideMain()
 
 void AppController::openSettings()
 {
-    showMain();
+    // The bar's Settings action is the same front door as Open app: bring the
+    // window up centered and above the reader, then show the sheet.
+    showMain(true);
     // The popup lives in QML; let the window settle first so it opens on top.
     QTimer::singleShot(0, this, [this] { emit settingsRequested(); });
 }
