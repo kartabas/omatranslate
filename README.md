@@ -3,7 +3,7 @@
 Translate the passage you highlight in a PDF, right where you are reading —
 then keep the session as Markdown.
 
-![Omatranslate showing a translated passage and the session history](docs/screenshot.png)
+![Omatranslate translating a highlighted passage](docs/preview/hero-translation.webp)
 
 Omatranslate is a reading companion for [Omarchy](https://omarchy.org). It
 watches the Wayland primary selection while you read in your own PDF reader.
