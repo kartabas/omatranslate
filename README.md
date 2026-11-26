@@ -16,6 +16,20 @@ file when you are done.
 The PDF is opened in your reader and is never modified. Translations live in
 memory for one session and are written only when you export them.
 
+## How it works
+
+<p align="center">
+  <a href="docs/preview/01-open-pdf.webp"><img src="docs/preview/01-open-pdf.webp" width="49%" alt="Step 1: open your PDF in your usual reader"></a>
+  <a href="docs/preview/02-highlight-text.webp"><img src="docs/preview/02-highlight-text.webp" width="49%" alt="Step 2: highlight a passage and a Translate chip appears"></a>
+</p>
+<p align="center">
+  <a href="docs/preview/03-read-translation.webp"><img src="docs/preview/03-read-translation.webp" width="49%" alt="Step 3: read the translation in a card beside the passage"></a>
+  <a href="docs/preview/04-session-history.webp"><img src="docs/preview/04-session-history.webp" width="49%" alt="Step 4: keep the session and export it as Markdown"></a>
+</p>
+
+Open your PDF, highlight a passage, read the translation, and keep the session.
+Click any image to enlarge.
+
 ## Why it feels different
 
 - **You decide when.** Highlighting never translates by itself. The chip, the
