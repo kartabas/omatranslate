@@ -135,7 +135,9 @@ when no document is open. The save dialog comes from
 `Overlay` is a `LayerShellQt` window with two modes: a small **Translate** chip
 and the translation card. `visible` starts false and `LayerShellQt::Window::get()`
 is called before the first show, which is required for the layer surface to be
-configured.
+configured. The chip is a five-second invitation: a single-shot timer dismisses
+it, and every new highlight restarts the countdown. The translation card has no
+such timer and stays until it is closed.
 
 Placement comes from `hyprctl monitors -j`, `cursorpos`, and
 `activewindow -j`:

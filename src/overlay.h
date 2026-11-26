@@ -6,6 +6,7 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QTimer>
 
 class Backend;
 class QQmlEngine;
@@ -66,4 +67,5 @@ private:
     Placement m_placement;
     QString m_lastSelection;
     QString m_hyprctl;
+    QTimer m_chipTimer;
 };
