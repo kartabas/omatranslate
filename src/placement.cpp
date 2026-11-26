@@ -108,3 +108,32 @@ QPoint popoverPosition(const QPoint &anchor, const QSize &popover, const QSize &
     y = qBound(margin + 28, y, qMax(margin + 28, screen.height() - popover.height() - margin));
     return {x, y};
 }
+
+QRect centeredWindowGeometry(const QRect &screen, const QSize &window)
+{
+    const QSize size = window.boundedTo(screen.size());
+    return QRect(screen.left() + (screen.width() - size.width()) / 2,
+                 screen.top() + (screen.height() - size.height()) / 2,
+                 size.width(), size.height());
+}
+
+QStringList mainWindowPlacementCommands(int pid, bool onTop)
+{
+    const QString window = QStringLiteral("pid:%1").arg(pid);
+    QStringList commands;
+    // Hyprland can only center a floating window, so float it first. Pinning
+    // keeps it above other windows even after they take focus.
+    commands << QStringLiteral("dispatch hl.dsp.window.float({action='on',window='%1'})").arg(window)
+             << QStringLiteral("dispatch hl.dsp.window.center({window='%1'})").arg(window);
+    if (onTop) {
+        commands << QStringLiteral("dispatch hl.dsp.window.pin({action='on',window='%1'})").arg(window)
+                 << QStringLiteral("dispatch hl.dsp.window.alter_zorder({mode='top',window='%1'})")
+                        .arg(window);
+    }
+    return commands;
+}
+
+QStringList mainWindowUnpinCommands(int pid)
+{
+    return {QStringLiteral("dispatch hl.dsp.window.pin({action='off',window='pid:%1'})").arg(pid)};
+}

@@ -1,12 +1,39 @@
 #include "appcontroller.h"
 
 #include <QCoreApplication>
+#include <QGuiApplication>
+#include <QProcess>
 #include <QQuickWindow>
+#include <QScreen>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
 
 #include "backend.h"
+#include "placement.h"
 #include "translationservice.h"
+
+namespace {
+
+bool hyprctlAvailable()
+{
+    return QGuiApplication::platformName().startsWith(QLatin1String("wayland"))
+           && !QStandardPaths::findExecutable(QStringLiteral("hyprctl")).isEmpty()
+           && !qEnvironmentVariableIsEmpty("HYPRLAND_INSTANCE_SIGNATURE");
+}
+
+void runHyprctl(const QStringList &commands)
+{
+    const QString hyprctl = QStandardPaths::findExecutable(QStringLiteral("hyprctl"));
+    QProcess process;
+    process.start(hyprctl, {QStringLiteral("--batch"), commands.join(QStringLiteral("; "))});
+    if (process.waitForStarted(300) && process.waitForFinished(500))
+        return;
+    process.kill();
+    process.waitForFinished(200);
+}
+
+} // namespace
 
 AppController::AppController(Backend *backend, TranslationService *translate, bool serviceMode,
                              QObject *parent)
@@ -35,24 +62,72 @@ void AppController::setMainVisible(bool visible)
     emit mainVisibleChanged();
 }
 
-void AppController::showMain()
+void AppController::showMain(bool onTop)
 {
     setMainVisible(true);
-    if (m_window) {
-        m_window->show();
-        m_window->raise();
-        m_window->requestActivate();
+    if (!m_window) {
+        m_onTopApplied = false;
+        return;
     }
+    m_window->show();
+    m_window->raise();
+    m_window->requestActivate();
+
+    if (!onTop)
+        return;
+    // Give the compositor a moment to map the surface before asking Hyprland
+    // to find and float it. The commands are idempotent, so a second Open app
+    // click simply re-centers the window.
+    QTimer::singleShot(80, this, [this] {
+        if (m_mainVisible)
+            placeMainOnTop();
+    });
+}
+
+void AppController::placeMainOnTop()
+{
+    if (!m_window)
+        return;
+
+    if (hyprctlAvailable()) {
+        runHyprctl(mainWindowPlacementCommands(QCoreApplication::applicationPid(), true));
+    } else {
+        // X11 (and any other compositor) can place a window itself; on
+        // Wayland without Hyprland the best we can do is ask Qt for on-top.
+        if (!(m_window->flags() & Qt::WindowStaysOnTopHint)) {
+            m_window->setFlags(m_window->flags() | Qt::WindowStaysOnTopHint);
+            m_window->show();
+        }
+        QScreen *screen = m_window->screen() ? m_window->screen() : QGuiApplication::primaryScreen();
+        if (screen)
+            m_window->setGeometry(centeredWindowGeometry(screen->availableGeometry(), m_window->size()));
+    }
+    m_onTopApplied = true;
+}
+
+void AppController::clearOnTop()
+{
+    if (!m_onTopApplied)
+        return;
+    if (hyprctlAvailable()) {
+        runHyprctl(mainWindowUnpinCommands(QCoreApplication::applicationPid()));
+    } else if (m_window && (m_window->flags() & Qt::WindowStaysOnTopHint)) {
+        m_window->setFlags(m_window->flags() & ~Qt::WindowStaysOnTopHint);
+    }
+    m_onTopApplied = false;
 }
 
 void AppController::hideMain()
 {
+    clearOnTop();
     setMainVisible(false);
 }
 
 void AppController::openSettings()
 {
-    showMain();
+    // The bar's Settings action is the same front door as Open app: bring the
+    // window up centered and above the reader, then show the sheet.
+    showMain(true);
     // The popup lives in QML; let the window settle first so it opens on top.
     QTimer::singleShot(0, this, [this] { emit settingsRequested(); });
 }
@@ -70,6 +145,7 @@ void AppController::quitSoon()
 
 void AppController::quitNow()
 {
+    clearOnTop();
     // Hide first: a visible Quick window keeps the process waiting on a render
     // thread that no longer has a screen. exit() rather than quit(), because
     // quit() is swallowed once the window has been shown.
@@ -119,7 +195,9 @@ QJsonObject AppController::handle(const QString &command, const QJsonObject &arg
         bool opened = true;
         if (!path.isEmpty() && m_backend)
             opened = m_backend->openUrl(QUrl::fromUserInput(path));
-        showMain();
+        // This is what the bar's Open app button sends: the window comes up
+        // centered and above the reader instead of wherever the compositor put it.
+        showMain(true);
         reply.insert(QStringLiteral("opened"), opened);
         return reply;
     }

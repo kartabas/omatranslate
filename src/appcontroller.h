@@ -32,7 +32,9 @@ public:
     // The control channel's handler. Returns the reply for one command.
     QJsonObject handle(const QString &command, const QJsonObject &arguments);
 
-    Q_INVOKABLE void showMain();
+    // `onTop` is the bar widget's Open app action: a floating, centered window
+    // that stays above the others until the window is hidden again.
+    Q_INVOKABLE void showMain(bool onTop = false);
     Q_INVOKABLE void hideMain();
     Q_INVOKABLE void openSettings();
     Q_INVOKABLE void requestsQuit();
@@ -42,6 +44,8 @@ signals:
     void settingsRequested();
 
 private:
+    void placeMainOnTop();
+    void clearOnTop();
     void quitNow();
     void quitSoon();
 
@@ -50,4 +54,5 @@ private:
     QPointer<QQuickWindow> m_window;
     bool m_serviceMode = false;
     bool m_mainVisible = true;
+    bool m_onTopApplied = false;
 };

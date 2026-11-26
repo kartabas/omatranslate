@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "kartabas.omatranslate",
   "name": "Omatranslate",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "kartabas",
   "license": "MIT",
   "description": "Switch Omatranslate's background watching on or off, and open its window or Settings, from the Omarchy bar.",

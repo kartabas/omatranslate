@@ -3,7 +3,7 @@
 Translate the passage you highlight in a PDF, right where you are reading —
 then keep the session as Markdown.
 
-![Omatranslate showing a translated passage and the session history](docs/screenshot.png)
+![Omatranslate translating a highlighted passage](docs/preview/hero-translation.webp)
 
 Omatranslate is a reading companion for [Omarchy](https://omarchy.org). It
 watches the Wayland primary selection while you read in your own PDF reader.
@@ -15,6 +15,20 @@ file when you are done.
 
 The PDF is opened in your reader and is never modified. Translations live in
 memory for one session and are written only when you export them.
+
+## How it works
+
+<p align="center">
+  <a href="docs/preview/01-open-pdf.webp"><img src="docs/preview/01-open-pdf.webp" width="49%" alt="Step 1: open your PDF in your usual reader"></a>
+  <a href="docs/preview/02-highlight-text.webp"><img src="docs/preview/02-highlight-text.webp" width="49%" alt="Step 2: highlight a passage and a Translate chip appears"></a>
+</p>
+<p align="center">
+  <a href="docs/preview/03-read-translation.webp"><img src="docs/preview/03-read-translation.webp" width="49%" alt="Step 3: read the translation in a card beside the passage"></a>
+  <a href="docs/preview/04-session-history.webp"><img src="docs/preview/04-session-history.webp" width="49%" alt="Step 4: keep the session and export it as Markdown"></a>
+</p>
+
+Open your PDF, highlight a passage, read the translation, and keep the session.
+Click any image to enlarge.
 
 ## Why it feels different
 
@@ -97,8 +111,8 @@ modes and two actions:
 | **Watching** | Starts the hidden service. A highlight shows the Translate chip. |
 | **Paused** | Stops watching and hides the chip, but keeps the session in memory. |
 | **Stopped** | Ends the process, unless the session still has unexported translations. |
-| **Open app** | Shows the window. Closing it hides the window and keeps watching. |
-| **Settings** | Opens straight to the translation service and language choices. |
+| **Open app** | Shows the window centered and above other windows. Closing it hides the window and keeps watching. |
+| **Settings** | Opens the window centered and above other windows, straight to the translation service and language choices. |
 
 The same switches work from a terminal:
 
